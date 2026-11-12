@@ -1,13 +1,13 @@
-import { candidates, generatePuzzle, solve, type BandId, type Puzzle } from '@ctc/engine';
-
-/** Campaign worlds (docs/arquitetura.md, M4). Names live in the game's i18n. */
-export const WORLDS: readonly { id: string; bands: readonly { band: BandId; count: number }[] }[] = [
-  { id: 'locker', bands: [{ band: 'tutorial', count: 6 }, { band: 'easy', count: 6 }] },
-  { id: 'safe', bands: [{ band: 'medium', count: 12 }] },
-  { id: 'bank', bands: [{ band: 'hard', count: 12 }] },
-  { id: 'museum', bands: [{ band: 'expert', count: 12 }] },
-  { id: 'casino', bands: [{ band: 'master', count: 12 }] },
-];
+import {
+  candidates,
+  generatePuzzle,
+  solve,
+  WORLDS,
+  type BandId,
+  type CampaignData,
+  type CampaignLevel,
+  type Puzzle,
+} from '@ctc/engine';
 
 /**
  * Requested seeds are tried in order from a fixed base per band (1000, 2000, …):
@@ -21,23 +21,6 @@ export const SEED_BASE: Record<BandId, number> = {
   expert: 5000,
   master: 6000,
 };
-
-export interface CampaignLevel {
-  /** Stable id used in progress and links, e.g. "safe-03". */
-  id: string;
-  world: string;
-  /** 0-based position inside the world. */
-  index: number;
-  band: BandId;
-  /** Seed given to generatePuzzle (puzzle.seed is the successful attempt's). */
-  seed: number;
-  puzzle: Puzzle;
-}
-
-export interface CampaignData {
-  version: 1;
-  worlds: { id: string; levels: CampaignLevel[] }[];
-}
 
 function sameCode(a: readonly number[] | null | undefined, b: readonly number[]): boolean {
   return !!a && a.length === b.length && a.every((x, i) => x === b[i]);

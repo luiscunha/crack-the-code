@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { BANDS } from '@ctc/engine';
 import { describe, expect, it } from 'vitest';
-import { buildCampaign, serializeCampaign, validateLevel, WORLDS, type CampaignData } from '../src/campaignBuild';
+import { BANDS, WORLDS, type CampaignData } from '@ctc/engine';
+import { buildCampaign, serializeCampaign, validateLevel } from '../src/campaignBuild';
 
 const JSON_PATH = resolve(import.meta.dirname, '../../../apps/game/src/data/campaign.json');
 const committed = readFileSync(JSON_PATH, 'utf8');

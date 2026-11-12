@@ -11,3 +11,4 @@ export * from './grade';
 export * from './bands';
 export * from './generator';
 export * from './daily';
+export * from './campaign';
