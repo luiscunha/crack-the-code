@@ -1,4 +1,4 @@
-import { hasUniqueSolution } from './bruteforce';
+import { isUnique } from './search';
 import { compileClue } from './clues';
 import { randInt, shuffle, weightedIndex, type Rng } from './rng';
 import { score } from './score';
@@ -15,6 +15,8 @@ export interface ClueGenOptions {
   maxRawClues: number;
   /** Probability that a guess may repeat symbols (only when the params allow repeats). */
   repeatGuessChance: number;
+  /** Open with a (0,0) clue built only from symbols outside the secret (tutorial). */
+  startWithZeroClue: boolean;
 }
 
 export const DEFAULT_CLUE_GEN: ClueGenOptions = {
@@ -22,6 +24,7 @@ export const DEFAULT_CLUE_GEN: ClueGenOptions = {
   maxZeroClues: 1,
   maxRawClues: 14,
   repeatGuessChance: 0.35,
+  startWithZeroClue: false,
 };
 
 export function randomCode(params: PuzzleParams, rng: Rng): number[] {
@@ -102,7 +105,8 @@ export function generateClues(
 
   for (let tries = 0; remaining > 1; tries++) {
     if (tries > 400) return null;
-    const shared = weightedIndex(rng, weights);
+    const opening = options.startWithZeroClue && clues.length === 0 && tries < 20;
+    const shared = opening ? 0 : weightedIndex(rng, weights);
     const repeatOk = params.allowRepeats && rng() < options.repeatGuessChance;
     const guess = makeGuess(params, secret, shared, repeatOk, rng);
     const key = guess.join(',');
@@ -148,7 +152,7 @@ export function minimizeClues<T extends Clue>(
   for (const clue of order) {
     if (current.length <= minClues) break;
     const trial = current.filter((c) => c !== clue);
-    if (!hasUniqueSolution(params, trial)) continue;
+    if (!isUnique(params, trial)) continue;
     if (!accept(trial)) continue;
     current = trial;
   }
