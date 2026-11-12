@@ -30,6 +30,16 @@ importers:
         specifier: ^5.1.0
         version: 5.1.0(@types/node@26.6.6)(vite@8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(tsx@4.23.15))
 
+  apps/game:
+    dependencies:
+      '@ctc/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
+    devDependencies:
+      vite:
+        specifier: ^8.3.8
+        version: 8.3.8(@types/node@26.6.6)(esbuild@0.28.2)(tsx@4.23.15)
+
   packages/cli:
     dependencies:
       '@ctc/engine':
