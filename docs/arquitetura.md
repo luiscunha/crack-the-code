@@ -180,7 +180,7 @@ se não precisar de T5 quando a banda o exige).
 O tier domina; dentro do tier ordena por quanto a técnica mais difícil é usada. Serve para
 ordenar níveis dentro de uma banda na campanha (M4). A rever com dados de jogadores.
 
-### D12 — Estrutura de `apps/game` (M3, rascunho)
+### D12 — Estrutura de `apps/game` (M3)
 TypeScript + DOM sem framework, Vite 8. Lógica pura separada do DOM:
 - `state/` — redutor puro `reduce(state, action)`: cadeado, notas (posição × símbolo,
   `unknown → excluded → confirmed`), pistas esgotadas, undo/redo ilimitado. O histórico
@@ -207,7 +207,10 @@ O solver corre uma vez por puzzle e guarda os passos. Cada ajuda:
    repetições) contam como vistos quando o jogador os aplica (`acknowledged` no `Board`)
    ou quando já confirmou esses símbolos.
 4. T3/T4 são focados: a ajuda diz **uma** dedução (posição fixa, senão símbolo fora,
-   senão uma célula) e "Aplicar" escreve só essa; a ajuda seguinte continua o mesmo passo.
+   senão as posições excluídas de **um** símbolo, "o 5 não está nas posições 1, 2 e 4") e
+   "Aplicar" escreve só essa; a ajuda seguinte continua o mesmo passo. (Na verificação no
+   browser, uma célula de cada vez dava 12 ajudas para um único passo T3; agrupar por
+   símbolo reduz para 3–4.)
    T1/T2/T5 aplicam todo o efeito ainda em falta.
 Um property test garante que aplicar ajudas repetidamente leva as notas à solução em todas
 as bandas (incluindo master). `hintsUsed` conta uma vez por ajuda distinta mostrada.
@@ -219,10 +222,14 @@ são funções. As ajudas têm um template por técnica que recebe um contexto j
 (nomes das cores por língua, pistas como "326 (n.º 1)"). A língua escolhida fica em
 `localStorage` (com `try/catch`); `?lang=` tem prioridade.
 
-### Limitações conhecidas (a decidir no ponto de paragem 1)
+### Limitações conhecidas
 - Os passos T3/T4 são "consistência em bloco": um passo pode excluir uma dúzia de valores
-  de uma vez. É correto e mede bem a dificuldade, mas uma hint T3+ precisa de ser
-  apresentada de forma focada (um valor de cada vez) em M3.
+  de uma vez. Resolvido na UI com ajudas focadas (D13), mas a explicação continua a ser
+  "experimenta as combinações": diz *o quê*, não mostra *porquê* com um exemplo concreto.
+- Na master, os primeiros passos T3/T4 são muitas vezes só limites de contagem ("o azul
+  aparece no máximo 3 vezes"): corretos mas pouco úteis como ajuda.
+- Ajudas T5 podem citar 5–6 pistas ("as pistas … deixariam de ser possíveis em conjunto").
+- Sem testes de DOM (sem jsdom); a UI é verificada por typecheck, build e no browser.
 - Na variante L6 com 6 cores, um palpite sem repetições mostra sempre as 6 cores, logo
   `exact + misplaced` é igual em todas as pistas (o nº de cores distintas do código).
   7 ou 8 cores resolveriam isso à custa de tempo de geração (ver D8).
@@ -251,3 +258,8 @@ são funções. As ajudas têm um template por técnica que recebe um contexto j
 11. Ecrã de puzzle: cadeado, teclado, lista de pistas, grelha de notas, undo.
 12. Hints a partir dos passos do solver (i18n pt-PT/en), seletor de banda.
 13. Verificação no browser de um puzzle por banda → **PONTO DE PARAGEM 2**.
+    Feita a 375 px e a 1280 px, claro/escuro, pt-PT/en: tutorial, easy, medium, hard,
+    expert, master (L6 cores e L5 dígitos) jogados até "Cofre aberto!" só com ajudas e
+    teclado do jogo; erro registado em "Tentativas erradas"; undo de notas e riscados.
+    Corrigido nesta verificação: transbordo horizontal a 375 px (coluna `auto` da grelha)
+    e grelha de notas mais larga que o painel.

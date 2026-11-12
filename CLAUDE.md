@@ -48,6 +48,6 @@ e uma **dificuldade medida por um solver que raciocina como uma pessoa**.
 - [x] M0 Scaffolding
 - [x] M1 Motor (scoring, força bruta, gerador)
 - [x] M2 Solver humano + grading + calibração (relatório em `docs/calibracao.md`)
-- [ ] M3 UI jogável (web)
+- [x] M3 UI jogável (web) — `pnpm --filter game dev`; `?band=<id>&seed=<n>&lang=en` para abrir um puzzle fixo
 - [ ] M4 Campanha, Cofre Diário, partilha
 - [ ] M5 Capacitor + polimento
