@@ -43,7 +43,7 @@ e uma **dificuldade medida por um solver que raciocina como uma pessoa**.
 ## Estado
 
 - [x] M0 Scaffolding
-- [ ] M1 Motor (scoring, força bruta, gerador)
+- [x] M1 Motor (scoring, força bruta, gerador)
 - [ ] M2 Solver humano + grading + calibração
 - [ ] M3 UI jogável (web)
 - [ ] M4 Campanha, Cofre Diário, partilha
