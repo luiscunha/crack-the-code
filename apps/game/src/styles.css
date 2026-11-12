@@ -479,15 +479,23 @@ h2 {
   margin: 0 auto;
 }
 
+.notes-grid td {
+  padding: 0;
+}
+
 .notes-grid th {
   font: 600 0.75rem var(--mono);
   color: var(--muted);
-  padding: 0 4px 0 0;
+  padding: 0;
+}
+
+.notes-grid tbody th {
+  padding-right: 4px;
 }
 
 .note,
 .note-head {
-  width: 28px;
+  width: 26px;
   height: 30px;
   padding: 0;
   border: 1px solid transparent;
@@ -555,6 +563,8 @@ h2 {
 
 .puzzle-layout {
   display: grid;
+  /* An implicit `auto` column grows to its widest child and overflows narrow screens. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 14px;
 }
 

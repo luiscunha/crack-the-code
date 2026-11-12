@@ -14,9 +14,24 @@ function conclusions(c: HintContext): string {
   if (c.out.length > 1) parts.push(`${list(c.out.map(o))} saem do código`);
   if (c.in.length === 1) parts.push(`${o(c.in[0] ?? '')} está no código`);
   if (c.in.length > 1) parts.push(`${list(c.in.map(o))} estão no código`);
-  if (c.removed.length) parts.push(list(c.removed.map((r) => `${o(r.symbol)} não está na posição ${r.position}`)));
+  if (c.removed.length) {
+    parts.push(
+      list(
+        bySymbol(c.removed).map(([s, ps]) =>
+          ps.length === 1 ? `${o(s)} não está na posição ${ps[0]}` : `${o(s)} não está nas posições ${list(ps)}`,
+        ),
+      ),
+    );
+  }
   for (const k of c.counts) parts.push(`${o(k.symbol)} aparece ${times(k.min, k.max, c.length)}`);
-  return list(parts);
+  return parts.join('; ');
+}
+
+/** Removed cells grouped by symbol, in first-seen order: [["5", ["1", "2"]], …]. */
+function bySymbol(cells: readonly NamedCell[]): [string, string[]][] {
+  const groups = new Map<string, string[]>();
+  for (const c of cells) groups.set(c.symbol, [...(groups.get(c.symbol) ?? []), String(c.position)]);
+  return [...groups];
 }
 
 const vezes = (n: number): string => `${n} ${n === 1 ? 'vez' : 'vezes'}`;
@@ -75,5 +90,5 @@ export const hintsPt: HintMessages = {
     },
   },
   mistake: (c) => `Há um erro nas tuas notas: revê ${at(c)}.`,
-  done: 'As tuas notas já mostram o código todo. Introdu-lo no cadeado e valida.',
+  done: 'As tuas notas já mostram o código todo. Introduz-o no cadeado e valida.',
 };

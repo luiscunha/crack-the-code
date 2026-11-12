@@ -80,13 +80,17 @@ function informationalSeen(step: SolveStep, index: number, board: Board, params:
   });
 }
 
-/** One concrete deduction: a placed cell, else a symbol out/in, else one removed cell or count. */
+/**
+ * One concrete deduction: a placed cell, else a symbol out/in, else the removals of one
+ * symbol ("the 5 is not in positions 1, 2 and 4"), else one count.
+ */
 function narrow(focus: Focus): Focus {
   const none: Focus = { placed: [], out: [], in: [], removed: [], counts: [] };
   if (focus.placed[0]) return { ...none, placed: [focus.placed[0]] };
   if (focus.out[0] !== undefined) return { ...none, out: [focus.out[0]] };
   if (focus.in[0] !== undefined) return { ...none, in: [focus.in[0]] };
-  if (focus.removed[0]) return { ...none, removed: [focus.removed[0]] };
+  const first = focus.removed[0];
+  if (first) return { ...none, removed: focus.removed.filter((c) => c.symbol === first.symbol) };
   if (focus.counts[0]) return { ...none, counts: [focus.counts[0]] };
   return focus;
 }

@@ -59,6 +59,27 @@ describe('hints', () => {
     );
   });
 
+  it('focused T3/T4 hints group the removals of one symbol', () => {
+    // medium seed 1 (1637): one clue-consistency step on 2957 removes a dozen cells.
+    const puzzle = puzzleFor('medium', 1);
+    const steps = solverSteps(puzzle);
+    let state = start(puzzle);
+    let grouped = 0;
+    for (let i = 0; i < 60; i++) {
+      const hint = nextHint(puzzle, steps, state.board);
+      if (hint.kind === 'done') break;
+      if (hint.kind === 'step' && hint.step.tier >= 3 && hint.focus.removed.length > 0) {
+        expect(new Set(hint.focus.removed.map((c) => c.symbol)).size).toBe(1);
+        if (hint.focus.removed.length > 1) {
+          grouped++;
+          expect(explainHint(hint, puzzle, LOCALES['pt-PT'])).toMatch(/não está nas posições \d(, \d)* e \d/);
+        }
+      }
+      state = apply(state, hint);
+    }
+    expect(grouped).toBeGreaterThan(0);
+  });
+
   it('adapts to the notes: a deduction already made is skipped', () => {
     const steps = solverSteps(tutorial);
     let state = start(tutorial);

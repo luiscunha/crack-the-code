@@ -13,9 +13,24 @@ function conclusions(c: HintContext): string {
   if (c.out.length > 1) parts.push(`${list(c.out)} are not in the code`);
   if (c.in.length === 1) parts.push(`${c.in[0] ?? ''} is in the code`);
   if (c.in.length > 1) parts.push(`${list(c.in)} are in the code`);
-  if (c.removed.length) parts.push(list(c.removed.map((r) => `${r.symbol} is not in position ${r.position}`)));
+  if (c.removed.length) {
+    parts.push(
+      list(
+        bySymbol(c.removed).map(([s, ps]) =>
+          ps.length === 1 ? `${s} is not in position ${ps[0]}` : `${s} is not in positions ${list(ps)}`,
+        ),
+      ),
+    );
+  }
   for (const k of c.counts) parts.push(`${k.symbol} appears ${times(k.min, k.max, c.length)}`);
-  return list(parts);
+  return parts.join('; ');
+}
+
+/** Removed cells grouped by symbol, in first-seen order: [["5", ["1", "2"]], …]. */
+function bySymbol(cells: readonly NamedCell[]): [string, string[]][] {
+  const groups = new Map<string, string[]>();
+  for (const c of cells) groups.set(c.symbol, [...(groups.get(c.symbol) ?? []), String(c.position)]);
+  return [...groups];
 }
 
 const count = (n: number): string => (n === 1 ? 'once' : n === 2 ? 'twice' : `${n} times`);
