@@ -36,13 +36,13 @@ e uma **dificuldade medida por um solver que raciocina como uma pessoa**.
 
 ## Comandos
 
-- `pnpm test` — todos os testes
+- `pnpm test` — todos os testes (`pnpm lint`, `pnpm typecheck`)
 - `pnpm --filter cli gen --band medium --count 1000 --seed 1` — relatório de geração
 - `pnpm --filter game dev` — UI em modo desenvolvimento
 
 ## Estado
 
-- [ ] M0 Scaffolding
+- [x] M0 Scaffolding
 - [ ] M1 Motor (scoring, força bruta, gerador)
 - [ ] M2 Solver humano + grading + calibração
 - [ ] M3 UI jogável (web)
