@@ -10,3 +10,4 @@ export * from './solver';
 export * from './grade';
 export * from './bands';
 export * from './generator';
+export * from './daily';
