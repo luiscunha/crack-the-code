@@ -8,6 +8,7 @@ e uma **dificuldade medida por um solver que raciocina como uma pessoa**.
 - Especificação completa: `docs/spec.md` — **ler antes de qualquer alteração ao motor**
 - Visão de produto e mercado: `docs/visao.md`
 - Decisões de arquitetura (manter atualizado): `docs/arquitetura.md`
+- Calibração das bandas (regenerar quando o motor mudar): `docs/calibracao.md`
 
 ## Stack
 
@@ -37,14 +38,16 @@ e uma **dificuldade medida por um solver que raciocina como uma pessoa**.
 ## Comandos
 
 - `pnpm test` — todos os testes (`pnpm lint`, `pnpm typecheck`)
-- `pnpm --filter cli gen --band medium --count 1000 --seed 1` — relatório de geração
+- `pnpm --filter cli gen --band medium --count 1000 --seed 1` — relatório de geração (`--band all` por omissão)
+- `pnpm --filter cli examples --band all --count 3 --seed 1` — puzzles de exemplo com os passos do solver
+- `pnpm --filter cli bench` — benchmark da força bruta
 - `pnpm --filter game dev` — UI em modo desenvolvimento
 
 ## Estado
 
 - [x] M0 Scaffolding
 - [x] M1 Motor (scoring, força bruta, gerador)
-- [ ] M2 Solver humano + grading + calibração
+- [x] M2 Solver humano + grading + calibração (relatório em `docs/calibracao.md`)
 - [ ] M3 UI jogável (web)
 - [ ] M4 Campanha, Cofre Diário, partilha
 - [ ] M5 Capacitor + polimento

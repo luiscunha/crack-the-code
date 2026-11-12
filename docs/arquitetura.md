@@ -18,15 +18,17 @@ crack-the-code/
 │  │     ├─ types.ts       Code, Feedback, Clue (união discriminada), Puzzle, Grade…
 │  │     ├─ rng.ts         mulberry32, randInt, shuffle, weightedIndex, deriveSeed
 │  │     ├─ score.ts       score(secret, guess) → Feedback
-│  │     ├─ clues.ts       compileClue(clue) → matcher; clueHolds
+│  │     ├─ clues.ts       compileClue → matcher; compileTracker → vista incremental
 │  │     ├─ space.ts       allCodes(params): espaço enumerado (cache por params)
 │  │     ├─ bruteforce.ts  candidates, countCandidates (oráculo)
+│  │     ├─ search.ts      countSolutions: contagem por DFS com poda (minimização)
+│  │     ├─ clueGen.ts     generateClues (heurísticas estéticas), minimizeClues
 │  │     ├─ solver.ts      solver humano T1–T5 com passos registados
 │  │     ├─ grade.ts       gradeFromSteps, difficultyScore
 │  │     ├─ bands.ts       configuração das bandas (calibrada em M2)
 │  │     ├─ generator.ts   generateAttempt, generatePuzzle
 │  │     └─ index.ts       API pública
-│  └─ cli/                 cli — scripts Node (tsx): gen, examples, bench
+│  └─ cli/                 cli — scripts Node (tsx): gen, examples, bench (report.ts, format.ts)
 └─ apps/
    └─ game/                game — Vite + DOM/CSS (M3), Capacitor (M5)
 ```
@@ -66,6 +68,7 @@ interface StepEffect {
   placed:  { position: number; symbol: number }[];  // posições que ficaram fixas
   symbolsIn: number[];                              // símbolos que passaram a "dentro"
   symbolsOut: number[];                             // símbolos que passaram a "fora"
+  counts: { symbol: number; min: number; max: number }[]; // limites novos (útil com repetições)
 }
 interface SolveStep {
   technique: Technique; tier: Tier;
@@ -110,6 +113,10 @@ A spec lista "contagem simples" e "fixação". Acrescentámos duas técnicas est
 ### D4 — T3/T4/T5 por enumeração restrita
 `D` = códigos compatíveis com os domínios e limites atuais, construído por DFS só quando
 T3 é necessário, com um bitmask por código das pistas que satisfaz.
+`D` só guarda códigos que satisfazem pelo menos uma pista e é construído com *trackers*
+incrementais (`compileTracker`), que abandonam um prefixo quando nenhuma pista o pode
+ainda cumprir. Os suportes de todas as pistas (ou de todos os pares) saem de uma única
+passagem por `D`.
 - T3: para uma pista, intersecta os domínios com a união dos códigos de `D` que a satisfazem.
 - T4: o mesmo com pares de pistas.
 - T5: assume `pos = v`, propaga T3+T4 até ponto fixo (subsume T1/T2 dentro da hipótese);
@@ -131,6 +138,56 @@ O `Puzzle.seed` guardado é a seed da tentativa que resultou: reproduz o puzzle 
 ### D7 — Identidade das pistas
 `clueIds` nos passos são índices em `puzzle.clues`. A ordem final das pistas é fixada
 antes do grading final, por isso os passos guardados/recalculados batem com a UI.
+
+### D8 — Bandas calibradas (M2)
+Relatório completo e exemplos em `docs/calibracao.md`. Valores finais (`bands.ts`):
+
+| Banda | Variantes | Tier aceite | Pistas | Notas |
+|---|---|---|---|---|
+| tutorial | L3, 0–9 | T1–T2 | 5–6 | abre com pista (0,0), que nunca é removida; ordem pedagógica |
+| easy | L3, 0–9 | T2 | 4–6 | |
+| medium | L3 / L4, 0–9 | T3 | 4–6 | |
+| hard | L4, 0–9 | T4 | 4–5 | |
+| expert | L5, 0–9 | T4–T5 | 5–7 | ~4% dos puzzles chegam a T5 |
+| master | L5 0–9 com repetições (peso 3) / L6 6 cores com repetições (peso 2) | T5 | 5–8 | sem pistas (0,0) |
+
+"Tier aceite" é sobre a técnica **mais difícil necessária**: `medium` exige mesmo T3,
+`hard` exige T4, `master` exige T5. Assim cada banda significa sempre o mesmo.
+
+Desvios face à tabela inicial da spec §6 e porquê:
+- **master sem L6 com dígitos**: 10^6 códigos torna o solver lento demais para o
+  orçamento de 200 ms. Ficou L5 com dígitos (10^5) e L6 com 6 cores (46 656).
+- **master: palpites quase sempre sem símbolos repetidos** (`repeatGuessChance` 0.1) e
+  **sem pistas (0,0)**: palpites com repetições dão puzzles que T4 resolve; com símbolos
+  distintos a taxa de puzzles T5 por tentativa sobe de ~8% para ~15–40%.
+- A variante é sorteada em cada tentativa, por isso a mistura final (≈42% L5, ≈58% L6)
+  não coincide com os pesos: a variante de cores acerta mais vezes em T5.
+
+### D9 — Contagem de soluções com poda na minimização
+A minimização testava a unicidade com uma passagem de força bruta por pista (37% do
+tempo de geração na `master`). `countSolutions` faz DFS com *trackers* incrementais e
+abandona um prefixo mal uma pista deixa de poder ser cumprida. Um property test garante
+que devolve exatamente o mesmo que a força bruta, e a validação final de cada puzzle
+continua a ser feita com a força bruta (regra inegociável 1).
+
+### D10 — Bandas com tier máximo 5 minimizam só por unicidade
+Sem teto de tier para proteger, correr o solver a cada remoção não acrescenta nada:
+minimiza-se por unicidade e o solver corre uma vez no fim (rejeita-se se bloquear ou
+se não precisar de T5 quando a banda o exige).
+
+### D11 — `difficultyScore`
+`100 × (maxTier − 1) + min(60, 10 × passos no tier máx.) + min(39, passos totais)`.
+O tier domina; dentro do tier ordena por quanto a técnica mais difícil é usada. Serve para
+ordenar níveis dentro de uma banda na campanha (M4). A rever com dados de jogadores.
+
+### Limitações conhecidas (a decidir no ponto de paragem 1)
+- Os passos T3/T4 são "consistência em bloco": um passo pode excluir uma dúzia de valores
+  de uma vez. É correto e mede bem a dificuldade, mas uma hint T3+ precisa de ser
+  apresentada de forma focada (um valor de cada vez) em M3.
+- Na variante L6 com 6 cores, um palpite sem repetições mostra sempre as 6 cores, logo
+  `exact + misplaced` é igual em todas as pistas (o nº de cores distintas do código).
+  7 ou 8 cores resolveriam isso à custa de tempo de geração (ver D8).
+- `pnpm test` demora ~40 s por causa dos 500 puzzles por banda (critério de M2).
 
 ## 4. Plano de tarefas
 
