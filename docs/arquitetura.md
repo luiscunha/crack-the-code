@@ -263,3 +263,33 @@ são funções. As ajudas têm um template por técnica que recebe um contexto j
     teclado do jogo; erro registado em "Tentativas erradas"; undo de notas e riscados.
     Corrigido nesta verificação: transbordo horizontal a 375 px (coluna `auto` da grelha)
     e grelha de notas mais larga que o painel.
+
+### M4 — Campanha, Cofre Diário, partilha
+Desenho (decidido no arranque do M4):
+- **Campanha** — 5 mundos, 12 níveis cada (60): Cacifo (tutorial ×6 + easy ×6), Cofre
+  (medium), Banco (hard), Museu (expert), Casino (master). Níveis gerados **offline** pelo
+  CLI a partir de seeds fixas, validados com força bruta e gravados em
+  `apps/game/src/data/campaign.json` (só seed + banda + id; o puzzle completo também,
+  para o jogo não gerar nada ao abrir um nível). Dentro de cada mundo, ordem crescente de
+  `difficultyScore`. Desbloqueio: cada nível abre quando o anterior está resolvido; um
+  mundo abre quando o anterior tem ≥ 9 de 12 resolvidos. Registo por nível: resolvido,
+  limpo (sem erros nem ajudas), melhor tempo.
+- **Cofre Diário** — no motor (`daily.ts`), para o CLI e o jogo usarem o mesmo:
+  número = dias UTC desde 2026-11-12 (#1); seed = `deriveSeed(0xC0FFEE, número)`; banda pelo
+  dia da semana UTC (seg easy, ter/qua medium, qui/sex hard, sáb expert, dom master); se
+  `generatePuzzle` falhar, tenta seeds derivadas seguintes (determinístico). Teste fixa
+  alguns dias para apanhar deriva entre plataformas.
+- **Partilha** — `Cofre Diário #123 🔓 4 dígitos · ⏱ 2:31 · 💡0 · ✨ limpo` + URL, via
+  Web Share API com fallback para a área de transferência; texto por i18n.
+- **Persistência** — `localStorage` versionado (`ctc:v1`, leitura tolerante a lixo):
+  progresso da campanha, histórico do diário (sequência atual e máxima), estatísticas
+  e o puzzle em curso (retomar após recarregar). Undo não sobrevive ao recarregar.
+
+14. Motor: `daily.ts` + testes; CLI `campaign` gera e valida `campaign.json` + teste que
+    o JSON coincide com a regeneração.
+15. Jogo: módulos puros `progress/` (desbloqueio, registos, sequência do diário, esquema de
+    armazenamento) + testes.
+16. UI: ecrã inicial com Campanha / Cofre Diário / Jogo livre; mapa de mundos e níveis;
+    ecrã de sucesso com partilha (diário) e "seguinte" (campanha) / "novo puzzle" no
+    próprio ecrã (jogo livre); retomar puzzle em curso; estatísticas.
+17. Verificação no browser + deploy → relatório do M4.
