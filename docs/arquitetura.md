@@ -11,7 +11,7 @@ crack-the-code/
 ├─ pnpm-workspace.yaml     packages/*, apps/*
 ├─ tsconfig.base.json      strict, noUncheckedIndexedAccess, moduleResolution bundler
 ├─ eslint.config.js        flat config; Math.random proibido em packages/engine
-├─ vitest.config.ts        projetos: engine, cli (e game em M3)
+├─ vitest.config.ts        testes de packages/* e apps/*
 ├─ packages/
 │  ├─ engine/              @ctc/engine — zero dependências de runtime, sem DOM
 │  │  └─ src/
@@ -179,6 +179,45 @@ se não precisar de T5 quando a banda o exige).
 `100 × (maxTier − 1) + min(60, 10 × passos no tier máx.) + min(39, passos totais)`.
 O tier domina; dentro do tier ordena por quanto a técnica mais difícil é usada. Serve para
 ordenar níveis dentro de uma banda na campanha (M4). A rever com dados de jogadores.
+
+### D12 — Estrutura de `apps/game` (M3, rascunho)
+TypeScript + DOM sem framework, Vite 8. Lógica pura separada do DOM:
+- `state/` — redutor puro `reduce(state, action)`: cadeado, notas (posição × símbolo,
+  `unknown → excluded → confirmed`), pistas esgotadas, undo/redo ilimitado. O histórico
+  guarda só o `Board` (cadeado + notas + pistas esgotadas); seleção, contadores
+  (`wrongSubmissions`, `hintsUsed`) e tempos ficam fora, para o undo não apagar erros nem
+  ajudas. O relógio entra pelas ações (`submit { now }`); nada de `Date.now()` no redutor.
+  Ações sem efeito não criam entradas no histórico.
+- "Riscado" não é um estado próprio: um símbolo está riscado quando as notas o excluem de
+  todas as posições (explicitamente ou por haver outro símbolo confirmado na posição /
+  sem repetições, o mesmo símbolo confirmado noutra).
+- `hints/` — seleção e texto das ajudas (puro, testado). `i18n/` — dicionários tipados.
+  `ui/` — componentes DOM construídos uma vez e atualizados com `update(view)`.
+- Geração no browser, na thread principal, dentro de um `setTimeout` para o "a gerar…"
+  aparecer primeiro. `?band=<id>&seed=<n>` abre `generatePuzzle(band, n)`; `?lang=en`.
+
+### D13 — Seleção das ajudas
+O solver corre uma vez por puzzle e guarda os passos. Cada ajuda:
+1. Se alguma nota contradiz a solução (confirmado errado, ou a solução excluída), aponta
+   essa célula; "Aplicar" repõe-na a desconhecido.
+2. Senão, o primeiro passo cuja conclusão as notas ainda não mostram: uma célula removida
+   que não está excluída (nem implicada por uma confirmação), uma posição fixa não
+   confirmada, um símbolo "fora" que não está excluído em todo o lado.
+3. Passos sem efeito representável nas notas ("o 5 está no código", contagens com
+   repetições) contam como vistos quando o jogador os aplica (`acknowledged` no `Board`)
+   ou quando já confirmou esses símbolos.
+4. T3/T4 são focados: a ajuda diz **uma** dedução (posição fixa, senão símbolo fora,
+   senão uma célula) e "Aplicar" escreve só essa; a ajuda seguinte continua o mesmo passo.
+   T1/T2/T5 aplicam todo o efeito ainda em falta.
+Um property test garante que aplicar ajudas repetidamente leva as notas à solução em todas
+as bandas (incluindo master). `hintsUsed` conta uma vez por ajuda distinta mostrada.
+
+### D14 — i18n
+Um dicionário por língua (`pt-PT` por omissão, `en`), ambos tipados com a mesma interface
+`Messages`, por isso uma chave em falta é erro de compilação. Frases com números/símbolos
+são funções. As ajudas têm um template por técnica que recebe um contexto já formatado
+(nomes das cores por língua, pistas como "326 (n.º 1)"). A língua escolhida fica em
+`localStorage` (com `try/catch`); `?lang=` tem prioridade.
 
 ### Limitações conhecidas (a decidir no ponto de paragem 1)
 - Os passos T3/T4 são "consistência em bloco": um passo pode excluir uma dúzia de valores
