@@ -22,7 +22,18 @@ export const en: Messages = {
     expert: { name: 'Expert', description: 'Five digits; sometimes a hypothesis is needed.' },
     master: { name: 'Master', description: 'With repeats, digits or colors. Needs hypotheses.' },
   },
+  worlds: { locker: 'Locker', safe: 'Safe', bank: 'Bank', museum: 'Museum', casino: 'Casino' },
   home: {
+    continue: 'Continue',
+    continueLabel: (what) => `Continue: ${what}`,
+    campaign: 'Campaign',
+    campaignProgress: (solved, total) => `${solved}/${total} levels`,
+    daily: 'Daily Vault',
+    dailyLine: (n, band) => `#${n} · ${band}`,
+    dailySolved: 'solved ✓',
+    streak: (days) => `🔥 ${days}-day streak`,
+    freePlay: 'Free play',
+    stats: 'Statistics',
     chooseBand: 'Choose a difficulty',
     newPuzzle: 'New puzzle',
     generating: 'Generating…',
@@ -31,8 +42,41 @@ export const en: Messages = {
     alphabetDigits: 'digits 0–9',
     alphabetColors: (count) => `${count} colors`,
   },
+  map: {
+    title: 'Campaign',
+    progress: (solved, total) => `${solved}/${total}`,
+    level: (n) => `Level ${n}`,
+    levelLabel: (n, status, bestTime) => {
+      const state = { locked: 'locked', open: 'not solved yet', solved: 'solved', clean: 'solved, clean' }[status];
+      return `Level ${n}: ${state}${bestTime ? `, best time ${bestTime}` : ''}`;
+    },
+    lockedLevel: (n, previous) => `Level ${n}: locked — solve level ${previous} first`,
+    lockedWorld: (previousWorld, missing) =>
+      `Solve ${missing} more ${missing === 1 ? 'level' : 'levels'} in ${previousWorld} to open.`,
+  },
+  stats: {
+    title: 'Statistics',
+    streak: 'Current streak',
+    maxStreak: 'Best streak',
+    dailySolved: 'Dailies solved',
+    campaignSolved: 'Campaign',
+    campaignClean: 'Clean levels',
+    freeTitle: 'Free play: puzzles solved',
+  },
+  context: {
+    level: (world, n) => `${world} · level ${n}`,
+    daily: (n) => `Daily Vault #${n}`,
+    dailySub: (band, date) => `${band} · ${date}`,
+  },
+  share: {
+    title: (n) => `Daily Vault #${n}`,
+    digits: (length) => `${length} digits`,
+    colors: (length) => `${length} colors`,
+    clean: 'clean',
+  },
   puzzle: {
     back: 'Back to start',
+    backToMap: 'Back to map',
     seed: (seed) => `seed ${seed}`,
     timerLabel: 'Time',
     cluesTitle: 'Clues',
@@ -76,5 +120,12 @@ export const en: Messages = {
     clean: 'Clean solve',
     again: 'New puzzle',
     home: 'Home',
+    next: 'Next',
+    map: 'Map',
+    share: 'Share',
+    copied: 'Copied!',
+    shareFailed: 'Could not copy. Select and copy the text:',
+    generating: 'Generating…',
+    dailyDone: 'Come back tomorrow for a new vault.',
   },
 };

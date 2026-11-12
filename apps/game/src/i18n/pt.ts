@@ -24,7 +24,18 @@ export const pt: Messages = {
     expert: { name: 'Perito', description: 'Cinco dígitos; às vezes é preciso uma hipótese.' },
     master: { name: 'Mestre', description: 'Com repetições, dígitos ou cores. Exige hipóteses.' },
   },
+  worlds: { locker: 'Cacifo', safe: 'Cofre', bank: 'Banco', museum: 'Museu', casino: 'Casino' },
   home: {
+    continue: 'Continuar',
+    continueLabel: (what) => `Continuar: ${what}`,
+    campaign: 'Campanha',
+    campaignProgress: (solved, total) => `${solved}/${total} níveis`,
+    daily: 'Cofre Diário',
+    dailyLine: (n, band) => `#${n} · ${band}`,
+    dailySolved: 'resolvido ✓',
+    streak: (days) => `🔥 ${days} ${plural(days, 'dia seguido', 'dias seguidos')}`,
+    freePlay: 'Jogo livre',
+    stats: 'Estatísticas',
     chooseBand: 'Escolhe a dificuldade',
     newPuzzle: 'Novo puzzle',
     generating: 'A gerar…',
@@ -34,8 +45,41 @@ export const pt: Messages = {
     alphabetDigits: 'dígitos 0–9',
     alphabetColors: (count) => `${count} cores`,
   },
+  map: {
+    title: 'Campanha',
+    progress: (solved, total) => `${solved}/${total}`,
+    level: (n) => `Nível ${n}`,
+    levelLabel: (n, status, bestTime) => {
+      const state = { locked: 'bloqueado', open: 'por resolver', solved: 'resolvido', clean: 'resolvido, limpo' }[status];
+      return `Nível ${n}: ${state}${bestTime ? `, melhor tempo ${bestTime}` : ''}`;
+    },
+    lockedLevel: (n, previous) => `Nível ${n}: bloqueado — resolve primeiro o nível ${previous}`,
+    lockedWorld: (previousWorld, missing) =>
+      `Resolve mais ${missing} ${plural(missing, 'nível', 'níveis')} em ${previousWorld} para abrir.`,
+  },
+  stats: {
+    title: 'Estatísticas',
+    streak: 'Sequência atual',
+    maxStreak: 'Melhor sequência',
+    dailySolved: 'Diários resolvidos',
+    campaignSolved: 'Campanha',
+    campaignClean: 'Níveis limpos',
+    freeTitle: 'Jogo livre: puzzles resolvidos',
+  },
+  context: {
+    level: (world, n) => `${world} · nível ${n}`,
+    daily: (n) => `Cofre Diário #${n}`,
+    dailySub: (band, date) => `${band} · ${date}`,
+  },
+  share: {
+    title: (n) => `Cofre Diário #${n}`,
+    digits: (length) => `${length} dígitos`,
+    colors: (length) => `${length} cores`,
+    clean: 'limpo',
+  },
   puzzle: {
     back: 'Voltar ao início',
+    backToMap: 'Voltar ao mapa',
     seed: (seed) => `seed ${seed}`,
     timerLabel: 'Tempo',
     cluesTitle: 'Pistas',
@@ -79,5 +123,12 @@ export const pt: Messages = {
     clean: 'Solução limpa',
     again: 'Novo puzzle',
     home: 'Início',
+    next: 'Seguinte',
+    map: 'Mapa',
+    share: 'Partilhar',
+    copied: 'Copiado!',
+    shareFailed: 'Não foi possível copiar. Seleciona e copia o texto:',
+    generating: 'A gerar…',
+    dailyDone: 'Volta amanhã para um novo cofre.',
   },
 };

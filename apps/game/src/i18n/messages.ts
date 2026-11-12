@@ -1,4 +1,5 @@
-import type { BandId, Technique } from '@ctc/engine';
+import type { BandId, Technique, WorldId } from '@ctc/engine';
+import type { LevelStatus } from '../progress';
 import type { Mark } from '../state';
 
 export type Locale = 'pt-PT' | 'en';
@@ -46,7 +47,19 @@ export interface Messages {
   langToggleLabel: string;
   colorNames: readonly string[];
   bands: Record<BandId, { name: string; description: string }>;
+  worlds: Record<WorldId, string>;
   home: {
+    continue: string;
+    /** Accessible name of the resume button, with what is being resumed. */
+    continueLabel: (what: string) => string;
+    campaign: string;
+    campaignProgress: (solved: number, total: number) => string;
+    daily: string;
+    dailyLine: (n: number, band: string) => string;
+    dailySolved: string;
+    streak: (days: number) => string;
+    freePlay: string;
+    stats: string;
     chooseBand: string;
     newPuzzle: string;
     generating: string;
@@ -55,8 +68,38 @@ export interface Messages {
     alphabetDigits: string;
     alphabetColors: (count: number) => string;
   };
+  map: {
+    title: string;
+    progress: (solved: number, total: number) => string;
+    level: (n: number) => string;
+    levelLabel: (n: number, status: LevelStatus, bestTime: string | null) => string;
+    lockedLevel: (n: number, previous: number) => string;
+    lockedWorld: (previousWorld: string, missing: number) => string;
+  };
+  stats: {
+    title: string;
+    streak: string;
+    maxStreak: string;
+    dailySolved: string;
+    campaignSolved: string;
+    campaignClean: string;
+    freeTitle: string;
+  };
+  /** Puzzle screen header for each mode. */
+  context: {
+    level: (world: string, n: number) => string;
+    daily: (n: number) => string;
+    dailySub: (band: string, date: string) => string;
+  };
+  share: {
+    title: (n: number) => string;
+    digits: (length: number) => string;
+    colors: (length: number) => string;
+    clean: string;
+  };
   puzzle: {
     back: string;
+    backToMap: string;
     seed: (seed: number) => string;
     timerLabel: string;
     cluesTitle: string;
@@ -96,5 +139,12 @@ export interface Messages {
     clean: string;
     again: string;
     home: string;
+    next: string;
+    map: string;
+    share: string;
+    copied: string;
+    shareFailed: string;
+    generating: string;
+    dailyDone: string;
   };
 }

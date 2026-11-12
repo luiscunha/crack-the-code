@@ -7,20 +7,27 @@ import { createHintPanel } from './hintPanel';
 import { formatTime, h, replayAnimation } from './dom';
 import { createKeypad, createLock } from './lock';
 import { createNotes } from './notes';
-import { createSuccess } from './success';
+import { createSuccess, type SuccessOptions } from './success';
 import type { Component, View } from './view';
 
 export interface PuzzleScreenOptions {
   puzzle: Puzzle;
-  /** Seed the puzzle was requested with (shown, and reproduces it via ?seed=). */
-  seed: number;
+  /** Header: what is being played ("Cofre · nível 3", "Cofre Diário #5", band name). */
+  title: string;
+  subtitle: string;
+  /** Accessible label of the back button. */
+  backLabel: string;
   m: Messages;
   now: () => number;
-  /** Resume a game (e.g. after switching language). */
+  /** Resume a game (after a reload or a language switch); a solved one opens on the result. */
   initialState?: GameState;
+  /** Every state change (to keep it across renders and save it for resuming). */
   onState?: (state: GameState) => void;
-  onHome: () => void;
-  onAgain: () => void;
+  /** Called once, when the right code is submitted, before the result dialog opens. */
+  onSolved?: (state: GameState) => void;
+  /** Buttons and note of the result dialog (they depend on the mode). */
+  success: (state: GameState) => SuccessOptions;
+  onBack: () => void;
   /** Extra header controls (language toggle). */
   headerExtra?: HTMLElement[];
 }
@@ -68,14 +75,14 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
   const components: Component[] = [clues, lock, keypad, notes];
 
   // Header
-  const back = button(m.puzzle.back, 'btn-icon', '←');
-  back.addEventListener('click', opts.onHome);
+  const back = button(opts.backLabel, 'btn-icon', '←');
+  back.addEventListener('click', opts.onBack);
   const timer = h('span', { class: 'timer', role: 'timer', 'aria-label': m.puzzle.timerLabel });
   const title = h(
     'div',
     { class: 'title' },
-    h('h1', {}, m.bands[puzzle.band].name),
-    h('span', { class: 'subtitle' }, m.puzzle.seed(opts.seed)),
+    h('h1', {}, opts.title),
+    h('span', { class: 'subtitle' }, opts.subtitle),
   );
   const header = h('header', { class: 'topbar' }, back, title, timer, ...(opts.headerExtra ?? []));
 
@@ -134,6 +141,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
         break;
       case 'right':
         status.textContent = '';
+        opts.onSolved?.(state);
         showSuccess();
         break;
       case null:
@@ -143,7 +151,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
 
   function showSuccess(): void {
     hints.close();
-    overlay = createSuccess(m, state, { onAgain: opts.onAgain, onHome: opts.onHome });
+    overlay = createSuccess(m, state, opts.success(state));
     screen.append(overlay);
   }
 

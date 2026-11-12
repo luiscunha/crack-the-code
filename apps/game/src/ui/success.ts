@@ -2,19 +2,51 @@ import type { Messages } from '../i18n';
 import { elapsedMs, isClean, type GameState } from '../state';
 import { formatTime, h } from './dom';
 
-export interface SuccessActions {
-  onAgain: () => void;
-  onHome: () => void;
+/** Lets an action report back inside the dialog ("Copied!", or a text to copy by hand). */
+export interface SuccessFeedback {
+  say: (text: string) => void;
+  /** Shows `text` in a read-only, pre-selected box (manual copy fallback). */
+  showText: (label: string, text: string) => void;
 }
 
-/** Modal shown when the code is right: time, hints, wrong attempts, clean badge. */
-export function createSuccess(m: Messages, state: GameState, actions: SuccessActions): HTMLElement {
+export interface SuccessAction {
+  label: string;
+  primary?: boolean;
+  onClick: (button: HTMLButtonElement, feedback: SuccessFeedback) => void;
+}
+
+export interface SuccessOptions {
+  actions: readonly SuccessAction[];
+  /** Line under the title (e.g. "Come back tomorrow"). */
+  note?: string;
+}
+
+/** Modal shown when the code is right: time, hints, wrong attempts, clean badge, mode actions. */
+export function createSuccess(m: Messages, state: GameState, opts: SuccessOptions): HTMLElement {
   const stat = (label: string, value: string): HTMLElement =>
     h('div', { class: 'stat' }, h('dt', {}, label), h('dd', {}, value));
-  const again = h('button', { type: 'button', class: 'btn btn-primary' }, m.success.again);
-  const home = h('button', { type: 'button', class: 'btn' }, m.success.home);
-  again.addEventListener('click', actions.onAgain);
-  home.addEventListener('click', actions.onHome);
+
+  const status = h('p', { class: 'status dialog-status', role: 'status', 'aria-live': 'polite' });
+  const manual = h('div', { class: 'share-manual', hidden: true });
+  const feedback: SuccessFeedback = {
+    say: (text) => {
+      status.textContent = text;
+    },
+    showText: (label, text) => {
+      const box = h('textarea', { class: 'share-text', readonly: true, rows: 3, 'aria-label': label });
+      box.value = text;
+      manual.replaceChildren(h('p', {}, label), box);
+      manual.hidden = false;
+      box.focus();
+      box.select();
+    },
+  };
+
+  const buttons = opts.actions.map((action) => {
+    const button = h('button', { type: 'button', class: action.primary ? 'btn btn-primary' : 'btn' }, action.label);
+    button.addEventListener('click', () => action.onClick(button, feedback));
+    return button;
+  });
 
   const dialog = h(
     'div',
@@ -29,9 +61,12 @@ export function createSuccess(m: Messages, state: GameState, actions: SuccessAct
       stat(m.success.hints, String(state.hintsUsed)),
       stat(m.success.wrong, String(state.wrongSubmissions)),
     ),
-    h('div', { class: 'dialog-actions' }, again, home),
+    opts.note && h('p', { class: 'dialog-note' }, opts.note),
+    h('div', { class: 'dialog-actions' }, ...buttons),
+    status,
+    manual,
   );
   const overlay = h('div', { class: 'overlay' }, dialog);
-  queueMicrotask(() => again.focus());
+  queueMicrotask(() => buttons[0]?.focus());
   return overlay;
 }
