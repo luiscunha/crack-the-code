@@ -41,6 +41,8 @@ e uma **dificuldade medida por um solver que raciocina como uma pessoa**.
 - `pnpm --filter cli gen --band medium --count 1000 --seed 1` — relatório de geração (`--band all` por omissão)
 - `pnpm --filter cli examples --band all --count 3 --seed 1` — puzzles de exemplo com os passos do solver
 - `pnpm --filter cli bench` — benchmark da força bruta
+- `pnpm --filter cli campaign` — regenera `apps/game/src/data/campaign.json` (60 níveis validados)
+- Push para `main` que toque no jogo ou no motor publica o site (workflow `pages.yml` → branch `gh-pages`)
 - `pnpm --filter game dev` — UI em modo desenvolvimento
 
 ## Estado
@@ -49,5 +51,5 @@ e uma **dificuldade medida por um solver que raciocina como uma pessoa**.
 - [x] M1 Motor (scoring, força bruta, gerador)
 - [x] M2 Solver humano + grading + calibração (relatório em `docs/calibracao.md`)
 - [x] M3 UI jogável (web) — `pnpm --filter game dev`; `?band=<id>&seed=<n>&lang=en` para abrir um puzzle fixo
-- [ ] M4 Campanha, Cofre Diário, partilha
+- [x] M4 Campanha, Cofre Diário, partilha — publicado em https://luiscunha.github.io/crack-the-code/
 - [ ] M5 Capacitor + polimento

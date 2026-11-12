@@ -390,3 +390,8 @@ Desenho (decidido no arranque do M4):
     ecrã de sucesso com partilha (diário) e "seguinte" (campanha) / "novo puzzle" no
     próprio ecrã (jogo livre); retomar puzzle em curso; estatísticas (D19, D20).
 17. Verificação no browser + deploy → relatório do M4.
+    Feita a 375 px e 1280 px, pt-PT/en: campanha (Cacifo 1–9 resolvidos pela UI, "Seguinte"
+    e "Mapa", Cofre abre com 9/12, bloqueios com motivo), retomar após recarregar (notas,
+    cadeado e relógio), Cofre Diário #1 (3745) com partilha nativa e por área de
+    transferência, diário reaberto mostra o resultado, sequência e estatísticas, "Novo
+    puzzle" no próprio ecrã, nível Casino L6 cores. Sem transbordo horizontal.
