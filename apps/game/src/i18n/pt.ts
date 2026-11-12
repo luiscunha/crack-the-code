@@ -1,4 +1,5 @@
 import type { Mark } from '../state';
+import { hintsPt } from './hints.pt';
 import type { Messages } from './messages';
 
 const plural = (n: number, one: string, many: string): string => (n === 1 ? one : many);
@@ -15,8 +16,6 @@ export const pt: Messages = {
   langToggle: 'EN',
   langToggleLabel: 'Switch to English',
   colorNames: ['vermelho', 'verde', 'azul', 'amarelo', 'laranja', 'roxo', 'branco', 'preto'],
-  list: (items) =>
-    items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} e ${items.at(-1)}`,
   bands: {
     tutorial: { name: 'Tutorial', description: 'Três dígitos e pistas por ordem, para aprender.' },
     easy: { name: 'Fácil', description: 'Três dígitos, só deduções diretas.' },
@@ -66,6 +65,7 @@ export const pt: Messages = {
     incomplete: 'Preenche todas as posições do cadeado.',
     wrong: 'Não é esse o código. Continua a tentar!',
   },
+  hints: hintsPt,
   hintPanel: {
     title: 'Ajuda',
     apply: 'Aplicar',

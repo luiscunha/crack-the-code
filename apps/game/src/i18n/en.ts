@@ -1,4 +1,5 @@
 import type { Mark } from '../state';
+import { hintsEn } from './hints.en';
 import type { Messages } from './messages';
 
 const MARK: Record<Mark, string> = {
@@ -13,8 +14,6 @@ export const en: Messages = {
   langToggle: 'PT',
   langToggleLabel: 'Mudar para português',
   colorNames: ['red', 'green', 'blue', 'yellow', 'orange', 'purple', 'white', 'black'],
-  list: (items) =>
-    items.length <= 1 ? (items[0] ?? '') : `${items.slice(0, -1).join(', ')} and ${items.at(-1)}`,
   bands: {
     tutorial: { name: 'Tutorial', description: 'Three digits, clues in order, to learn the ropes.' },
     easy: { name: 'Easy', description: 'Three digits, direct deductions only.' },
@@ -63,6 +62,7 @@ export const en: Messages = {
     incomplete: 'Fill in every position of the lock.',
     wrong: 'That is not the code. Keep going!',
   },
+  hints: hintsEn,
   hintPanel: {
     title: 'Hint',
     apply: 'Apply',

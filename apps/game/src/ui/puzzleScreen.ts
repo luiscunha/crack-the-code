@@ -3,6 +3,7 @@ import type { Messages } from '../i18n';
 import { canRedo, canUndo, elapsedMs, newGame, reduce, type Action, type GameState } from '../state';
 import { symbolForKey } from '../symbols';
 import { createClues } from './clues';
+import { createHintPanel } from './hintPanel';
 import { formatTime, h, replayAnimation } from './dom';
 import { createKeypad, createLock } from './lock';
 import { createNotes } from './notes';
@@ -11,6 +12,8 @@ import type { Component, View } from './view';
 
 export interface PuzzleScreenOptions {
   puzzle: Puzzle;
+  /** Seed the puzzle was requested with (shown, and reproduces it via ?seed=). */
+  seed: number;
   m: Messages;
   now: () => number;
   /** Resume a game (e.g. after switching language). */
@@ -52,6 +55,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
     state = reduce(state, action);
     if (state === before) return;
     if (action.type === 'submit') onSubmitted();
+    else status.textContent = '';
     render();
     opts.onState?.(state);
   };
@@ -71,18 +75,35 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
     'div',
     { class: 'title' },
     h('h1', {}, m.bands[puzzle.band].name),
-    h('span', { class: 'subtitle' }, m.puzzle.seed(puzzle.seed)),
+    h('span', { class: 'subtitle' }, m.puzzle.seed(opts.seed)),
   );
   const header = h('header', { class: 'topbar' }, back, title, timer, ...(opts.headerExtra ?? []));
 
   // Actions
   const undo = button(m.puzzle.undo, 'btn-icon', '↶');
   const redo = button(m.puzzle.redo, 'btn-icon', '↷');
+  const hintBtn = button(m.puzzle.hint, 'btn-hint', '💡');
   const validate = button(m.puzzle.validate, 'btn-primary');
   undo.addEventListener('click', () => dispatch({ type: 'undo' }));
   redo.addEventListener('click', () => dispatch({ type: 'redo' }));
   validate.addEventListener('click', () => dispatch({ type: 'submit', now: now() }));
-  const actions = h('div', { class: 'actions' }, undo, redo, validate);
+  const actions = h('div', { class: 'actions' }, undo, redo, hintBtn, validate);
+
+  const hints = createHintPanel({
+    puzzle,
+    m,
+    dispatch,
+    getState: () => state,
+    onHighlight: (hint) => {
+      view = {
+        ...view,
+        highlightClues: new Set(hint?.clueIds ?? []),
+        highlightCells: hint?.cells ?? [],
+      };
+      render();
+    },
+  });
+  hintBtn.addEventListener('click', () => hints.show());
 
   const status = h('p', { class: 'status', role: 'status', 'aria-live': 'polite' });
   const lockArea = h(
@@ -96,7 +117,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
     'main',
     { class: 'screen puzzle-screen' },
     header,
-    h('div', { class: 'puzzle-layout' }, clues.el, h('div', { class: 'play' }, lockArea, keypad.el, actions), notes.el),
+    h('div', { class: 'puzzle-layout' }, clues.el, h('div', { class: 'play' }, lockArea, keypad.el, actions, hints.el), notes.el),
   );
   root.replaceChildren(screen);
 
@@ -121,6 +142,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
   }
 
   function showSuccess(): void {
+    hints.close();
     overlay = createSuccess(m, state, { onAgain: opts.onAgain, onHome: opts.onHome });
     screen.append(overlay);
   }
@@ -135,6 +157,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
     undo.disabled = !canUndo(state);
     redo.disabled = !canRedo(state);
     validate.disabled = state.solvedAt !== null;
+    hintBtn.disabled = state.solvedAt !== null;
     tick();
   }
 
@@ -149,6 +172,8 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
       dispatch({ type: 'redo' });
     } else if (mod || e.altKey) {
       return;
+    } else if (e.key === 'Escape' && hints.isOpen()) {
+      hints.close();
     } else if (e.key === 'ArrowLeft') {
       dispatch({ type: 'move', delta: -1 });
     } else if (e.key === 'ArrowRight') {

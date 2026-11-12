@@ -1,7 +1,39 @@
-import type { BandId } from '@ctc/engine';
+import type { BandId, Technique } from '@ctc/engine';
 import type { Mark } from '../state';
 
 export type Locale = 'pt-PT' | 'en';
+
+/** A cell named for a sentence: symbol as the player calls it, position counted from 1. */
+export interface NamedCell {
+  symbol: string;
+  position: number;
+}
+
+/** Everything a hint template may mention, already formatted for the locale. */
+export interface HintContext {
+  /** Clues the step uses, e.g. "326 (n.º 1)". */
+  refs: string[];
+  /** Feedback of the first clue (0 when the step uses none). */
+  exact: number;
+  total: number;
+  /** Code length. */
+  length: number;
+  placed: NamedCell[];
+  out: string[];
+  in: string[];
+  removed: NamedCell[];
+  /** Occurrence bounds (only with repeats). */
+  counts: { symbol: string; min: number; max: number }[];
+  hypothesis: NamedCell | null;
+}
+
+export interface HintMessages {
+  clueRef: (guess: string, n: number) => string;
+  /** One template per solver technique. */
+  techniques: Record<Technique, (c: HintContext) => string>;
+  mistake: (cell: NamedCell) => string;
+  done: string;
+}
 
 /**
  * Every UI string. Both locales are typed as `Messages`, so a missing or extra key
@@ -13,8 +45,6 @@ export interface Messages {
   langToggle: string;
   langToggleLabel: string;
   colorNames: readonly string[];
-  /** Plain-language list: "a, b e c". */
-  list: (items: readonly string[]) => string;
   bands: Record<BandId, { name: string; description: string }>;
   home: {
     chooseBand: string;
@@ -52,6 +82,7 @@ export interface Messages {
     incomplete: string;
     wrong: string;
   };
+  hints: HintMessages;
   hintPanel: {
     title: string;
     apply: string;
