@@ -61,6 +61,17 @@ export interface StepEffect {
   symbolsIn: number[];
   /** Symbols newly known to be absent from the code. */
   symbolsOut: number[];
+  /**
+   * Every symbol whose occurrence bounds changed, with the new bounds. Only adds
+   * information beyond symbolsIn/symbolsOut when repeats are allowed ("exactly two 3s").
+   */
+  counts: SymbolCount[];
+}
+
+export interface SymbolCount {
+  symbol: number;
+  min: number;
+  max: number;
 }
 
 export interface SolveStep {
