@@ -27,10 +27,21 @@ crack-the-code/
 │  │     ├─ grade.ts       gradeFromSteps, difficultyScore
 │  │     ├─ bands.ts       configuração das bandas (calibrada em M2)
 │  │     ├─ generator.ts   generateAttempt, generatePuzzle
+│  │     ├─ daily.ts       Cofre Diário: datas UTC, número, banda do dia, dailyPuzzle (M4)
+│  │     ├─ campaign.ts    WORLDS e tipos CampaignData/CampaignLevel (M4)
 │  │     └─ index.ts       API pública
-│  └─ cli/                 cli — scripts Node (tsx): gen, examples, bench (report.ts, format.ts)
+│  └─ cli/                 cli — scripts Node (tsx): gen, examples, bench, campaign
+│                          (campaignBuild.ts gera e valida a campanha; test/campaign.test.ts)
 └─ apps/
    └─ game/                game — Vite + DOM/CSS (M3), Capacitor (M5)
+      └─ src/
+         ├─ state/ hints/ i18n/   (M3)
+         ├─ progress/      esquema ctc:v1, desbloqueios, registos, sequências, retomar (puro)
+         ├─ data/          campaign.json (gerado pelo CLI) + campaign.ts
+         ├─ share.ts       texto de partilha do diário (puro)
+         ├─ storage.ts     localStorage com try/catch
+         ├─ ui/            home, map, stats, puzzleScreen, success, …
+         └─ main.ts        controlador: ecrãs, contexto de jogo, deep links, gravação
 ```
 
 Os pacotes exportam o código-fonte TypeScript diretamente (`"main": "src/index.ts"`):
@@ -222,6 +233,92 @@ são funções. As ajudas têm um template por técnica que recebe um contexto j
 (nomes das cores por língua, pistas como "326 (n.º 1)"). A língua escolhida fica em
 `localStorage` (com `try/catch`); `?lang=` tem prioridade.
 
+### D15 — Cofre Diário no motor (`daily.ts`)
+As datas entram como texto `YYYY-MM-DD` (UTC); o motor nunca lê o relógio. A conversão
+usa `Date.UTC` só como aritmética de dias (determinística em qualquer plataforma) e é
+estrita: uma data que não faça ida e volta (`2026-02-30`) é rejeitada. O jogo obtém
+"hoje" com `new Date().toISOString().slice(0, 10)`. 2026-11-12 é quinta-feira, por isso o
+#1 é `hard`. `dailyPuzzle` usa `generatePuzzle(banda, dailySeed(n))` (já com 20 tentativas)
+e, se falhar, `deriveSeed(seed, 1000 + k)` para k = 1, 2, … — determinístico e sempre com
+resultado. O teste fixa três dias (quinta, domingo-master, segunda) contra deriva.
+
+### D16 — Campanha gerada offline
+- `WORLDS` e os tipos `CampaignData`/`CampaignLevel` vivem no motor (o CLI escreve, o jogo
+  lê; regra 4). Ids estáveis `"<mundo>-NN"` (`safe-03`), usados no progresso e em `?level=`.
+- **Seeds**: por banda, uma base fixa (tutorial 1000, easy 2000, medium 3000, hard 4000,
+  expert 5000, master 6000) percorrida em sequência; uma seed só é saltada se
+  `generatePuzzle` falhar ou se repetir uma solução ou um conjunto de pistas já usado na
+  campanha. Cada nível é validado com força bruta e com o solver antes de ser escrito.
+- **Ordem dentro do mundo** (desvio ao desenho): primeiro o comprimento do código, depois
+  `difficultyScore`. Só por score, o Cofre alternava L3 e L4 (scores 217–261 quase iguais),
+  e o tamanho do código pesa mais na experiência do que diferenças de 5 pontos. Assim o
+  Cofre faz 5 níveis L3 e depois 7 L4, e o Casino 6 níveis de dígitos L5 antes dos 6 de
+  cores L6 (a mecânica nova fica para o fim). No Cacifo, os 6 tutoriais vêm primeiro.
+- O JSON guarda o puzzle completo (pistas, parâmetros, solução, grade) com um nível por
+  linha (diffs legíveis): 43 KB, ~5 KB com gzip. Um teste regenera a campanha (~1,5 s) e
+  compara o texto com o ficheiro, e revalida a unicidade de cada nível por força bruta.
+
+### D17 — Esquema de armazenamento `ctc:v1`
+Uma só entrada `localStorage['ctc:v1']` com JSON:
+```ts
+{ version: 1,
+  campaign: { [levelId]: { solved: true, clean, bestTimeMs } },   // só níveis resolvidos
+  daily:    { [YYYY-MM-DD]: { timeMs, hints, wrong, clean } },     // 1.ª resolução do dia
+  free:     { [band]: { solved } },
+  current:  { source: 'campaign'|'daily'|'free', ref, board, selected,
+              wrongSubmissions, hintsUsed, elapsedMs } | null }
+```
+- Leitura tolerante campo a campo (`parseProgress`): JSON inválido, outra versão ou tipo
+  errado → valores por omissão; entradas inválidas são descartadas e as válidas mantidas;
+  nunca lança. As chaves são validadas (regex de id de nível, data UTC válida), o que
+  também impede chaves como `__proto__`. `clean` é recalculado de forma coerente (um
+  registo com ajudas ou erros nunca é limpo).
+- Uma versão futura incompatível passa a `ctc:v2` com migração explícita de `ctc:v1`.
+- **Sequências não são guardadas**: derivam do histórico. Atual = dias seguidos que acabam
+  hoje, ou ontem (a sequência continua viva enquanto o dia de hoje não foi jogado); máxima
+  = maior série de dias consecutivos no histórico.
+- O diário regista só a **primeira** resolução de cada dia, e só se a data do puzzle for
+  hoje ou ontem (para quem acaba depois da meia-noite UTC); dias abertos por link não
+  contam para a sequência.
+- Campanha: guarda o melhor — limpo uma vez fica limpo, o melhor tempo é o mínimo.
+- As preferências (`ctc.lang`, `ctc.band`) continuam em chaves próprias (D14).
+
+### D18 — Retomar o puzzle em curso
+- O instantâneo (`snapshotGame`) é gravado a cada ação e quando a página fica escondida
+  ou fecha (`visibilitychange`/`pagehide`), com o tempo jogado em `elapsedMs`. Ao retomar,
+  `startedAt = agora − elapsedMs`: o relógio continua e o tempo com a página fechada não
+  conta. Undo/redo não sobrevivem (como no desenho), nem a memória de "esta ajuda já foi
+  contada": voltar a pedir a mesma ajuda depois de recarregar conta outra vez.
+- Abrir um puzzle diferente substitui logo o instantâneo (abandonar = começar outro);
+  resolver limpa-o. Abrir o diário já resolvido mostra o resultado gravado (cadeado com a
+  solução, tempo/ajudas/erros, partilhar) e não mexe no puzzle em curso.
+- O instantâneo identifica o puzzle por `ref` (id do nível, data, ou `banda:seed` no jogo
+  livre, regenerado de forma determinística). Se não encaixar no puzzle (tamanhos
+  diferentes), é ignorado e começa-se de novo.
+
+### D19 — Partilha
+Texto puro (`share.ts`, testado nas duas línguas), sem spoilers, seguido de `\n` e
+`location.origin + location.pathname`. `navigator.share` só em dispositivos de toque
+(`pointer: coarse`): no desktop a folha de partilha do sistema é estranha e copiar é o
+esperado. Caso contrário, `navigator.clipboard.writeText` com "Copiado!" no diálogo; se
+falhar (origem não segura, permissão), mostra o texto numa caixa só de leitura já
+selecionada para copiar à mão. Cancelar a folha de partilha não mostra erro.
+
+### D20 — Navegação e modos
+- `main.ts` mantém um `PlayContext` (`campaign` com o nível, `daily` com a data, `free`
+  com banda e seed) que decide o cabeçalho ("Cofre · nível 3", "Cofre Diário #5", nome da
+  banda), o diálogo final e o que se regista. O ecrã de puzzle é o mesmo para os três.
+- Diálogo final: campanha → "Seguinte" + "Mapa" (no último nível de um mundo só "Mapa",
+  em vez de dois botões com o mesmo destino); diário → "Partilhar" + "Início"; jogo livre →
+  "Novo puzzle" gera outro da mesma banda no próprio ecrã.
+- Deep links: `?level=<id>` respeita os bloqueios exceto em dev (bloqueado → mapa);
+  `?daily=YYYY-MM-DD` só aceita de 2026-11-12 até hoje em produção (qualquer data em dev);
+  `?band=&seed=` como em M3. O endereço acompanha o puzzle aberto, por isso recarregar
+  volta ao mesmo puzzle e retoma-o.
+- Mapa: botões reais numa grelha `repeat(6, minmax(0, 1fr))`; os bloqueados estão
+  `disabled` com o motivo no `aria-label`/`title` e o motivo do mundo escrito no cartão.
+- Bundle: JS 48 → 103 KB (17 → 28 KB gzip); a campanha estática é ~5 KB gzip do aumento.
+
 ### Limitações conhecidas
 - Os passos T3/T4 são "consistência em bloco": um passo pode excluir uma dúzia de valores
   de uma vez. Resolvido na UI com ajudas focadas (D13), mas a explicação continua a ser
@@ -285,11 +382,11 @@ Desenho (decidido no arranque do M4):
   progresso da campanha, histórico do diário (sequência atual e máxima), estatísticas
   e o puzzle em curso (retomar após recarregar). Undo não sobrevive ao recarregar.
 
-14. Motor: `daily.ts` + testes; CLI `campaign` gera e valida `campaign.json` + teste que
-    o JSON coincide com a regeneração.
-15. Jogo: módulos puros `progress/` (desbloqueio, registos, sequência do diário, esquema de
-    armazenamento) + testes.
-16. UI: ecrã inicial com Campanha / Cofre Diário / Jogo livre; mapa de mundos e níveis;
+14. ✓ Motor: `daily.ts` + testes; CLI `campaign` gera e valida `campaign.json` + teste que
+    o JSON coincide com a regeneração (D15, D16).
+15. ✓ Jogo: módulos puros `progress/` (desbloqueio, registos, sequência do diário, esquema
+    de armazenamento) + testes (D17, D18).
+16. ✓ UI: ecrã inicial com Campanha / Cofre Diário / Jogo livre; mapa de mundos e níveis;
     ecrã de sucesso com partilha (diário) e "seguinte" (campanha) / "novo puzzle" no
-    próprio ecrã (jogo livre); retomar puzzle em curso; estatísticas.
+    próprio ecrã (jogo livre); retomar puzzle em curso; estatísticas (D19, D20).
 17. Verificação no browser + deploy → relatório do M4.
