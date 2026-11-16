@@ -18,7 +18,7 @@
     repeating-linear-gradient(90deg, transparent 0 157px, rgba(0, 0, 0, 0.38) 157px 159px, rgba(255, 255, 255, 0.12) 159px 160px),
     linear-gradient(180deg, #1c7479, #145c60);
   --ink: #f3f8f7;
-  --ink-muted: #d3e8e7;
+  --ink-muted: #e4f2f1;
   --title-ink: #ffffff;
 
   --surface: #eef3f3;
@@ -63,7 +63,7 @@
   --btn-primary-ink: #1d1a0c;
   --btn-primary-edge: #8f6c05;
 
-  --accent: #8f6c05;
+  --accent: #7a5c04;
   --counter: #0b1c1d;
   --counter-ink: #ffd23f;
   --focus: #ffd23f;
@@ -354,7 +354,7 @@ html[data-theme='safe'] body::after {
   /* Clues: brass museum plaques. */
   --plate: linear-gradient(180deg, #ecd48d, #c29b45 60%, #a88332);
   --plate-ink: #2d1d05;
-  --plate-muted: #4b3610;
+  --plate-muted: #3a2906;
   --plate-edge: #5e4512;
   --plate-radius: 2px;
   --plate-screw:
