@@ -1,0 +1,713 @@
+/*
+ * Places: one fixed palette per campaign world and for the Daily Vault (they are
+ * rooms, not light/dark variants). Each block sets the tokens from styles.css, then a
+ * few theme rules add the decorative details. The puzzle screen structure is the
+ * same everywhere; only materials change. Text tokens keep WCAG AA on their ground;
+ * the notes stay on the shared notepad so their three states read the same.
+ */
+
+/* ======================================================================
+   Cacifo / Locker — painted sheet steel, vent slots, Dymo tape, padlock
+   ====================================================================== */
+
+[data-theme='locker'] {
+  color-scheme: dark;
+  --room-color: #17666b;
+  --room:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='96'%3E%3Cg fill='%230a3a3d'%3E%3Crect x='44' y='22' width='72' height='5' rx='2.5'/%3E%3Crect x='44' y='34' width='72' height='5' rx='2.5'/%3E%3Crect x='44' y='46' width='72' height='5' rx='2.5'/%3E%3Crect x='44' y='58' width='72' height='5' rx='2.5'/%3E%3C/g%3E%3Cg fill='%23ffffff' fill-opacity='.16'%3E%3Crect x='44' y='27' width='72' height='1.5'/%3E%3Crect x='44' y='39' width='72' height='1.5'/%3E%3Crect x='44' y='51' width='72' height='1.5'/%3E%3Crect x='44' y='63' width='72' height='1.5'/%3E%3C/g%3E%3C/svg%3E") 0 0 / 160px 96px repeat-x,
+    repeating-linear-gradient(90deg, transparent 0 157px, rgba(0, 0, 0, 0.38) 157px 159px, rgba(255, 255, 255, 0.12) 159px 160px),
+    linear-gradient(180deg, #1c7479, #145c60);
+  --ink: #f3f8f7;
+  --ink-muted: #d3e8e7;
+  --title-ink: #ffffff;
+
+  --surface: #eef3f3;
+  --surface-ink: #12393b;
+  --surface-muted: #3d5b5d;
+  --surface-edge: #5f7778;
+
+  /* Clues: embossed label-maker tape. */
+  --plate: linear-gradient(180deg, #2b2b2b, #111 55%, #1d1d1d);
+  --plate-ink: #f4f4f4;
+  --plate-muted: #cfcfcf;
+  --plate-edge: #000;
+  --plate-radius: 3px;
+  --plate-screw: none;
+  --plate-pad-left: 12px;
+  --plate-shadow: 0 3px 5px rgba(0, 0, 0, 0.45);
+  --plate-emboss: 0 -1px 0 rgba(0, 0, 0, 0.9), 0 1px 0 rgba(255, 255, 255, 0.18);
+  --exact: #5ee08f;
+  --misplaced: #ffc247;
+
+  --lock-body: radial-gradient(120% 70% at 50% 0%, rgba(255, 255, 255, 0.2), transparent 60%), linear-gradient(180deg, #2d3239, #191c21);
+  --lock-edge: #000;
+  --lock-radius: 22px;
+  --shackle-show: block;
+  --bolts-show: none;
+  --shackle: #b9c0c8;
+  --label-font: 'Permanent Marker', 'Comic Sans MS', cursive;
+  --wheel: #0d0e10;
+  --wheel-ink: #ffffff;
+  --wheel-rim: #8d959e;
+  --wheel-sel: #ffd23f;
+
+  --key: linear-gradient(180deg, #f3f6f6, #d6dede);
+  --key-ink: #12393b;
+  --key-edge: #5f7778;
+  --key-radius: 7px;
+  --btn: linear-gradient(180deg, #f3f6f6, #d6dede);
+  --btn-ink: #12393b;
+  --btn-edge: #5f7778;
+  --btn-radius: 7px;
+  --btn-primary: linear-gradient(180deg, #ffdb5c, #f2b90c);
+  --btn-primary-ink: #1d1a0c;
+  --btn-primary-edge: #8f6c05;
+
+  --accent: #8f6c05;
+  --counter: #0b1c1d;
+  --counter-ink: #ffd23f;
+  --focus: #ffd23f;
+  --highlight: #ffd23f;
+}
+
+/* Chrome rim around the padlock face. */
+[data-theme='locker'] .lock-body {
+  box-shadow:
+    inset 0 2px 1px rgba(255, 255, 255, 0.2),
+    0 0 0 4px #aab1ba,
+    0 0 0 5px #4b5159,
+    0 16px 30px -10px rgba(0, 0, 0, 0.7);
+}
+
+/* The level number on a scrap of paper taped to the lock. */
+[data-theme='locker'] .lock-label {
+  position: absolute;
+  top: -16px;
+  left: -10px;
+  z-index: 2;
+  padding: 3px 12px 1px;
+  border-radius: 1px;
+  background: #f7f2e2;
+  color: #1c2a6b;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  box-shadow: 0 3px 5px rgba(0, 0, 0, 0.45);
+  transform: rotate(-7deg);
+}
+
+[data-theme='locker'] .lock-label::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  width: 34px;
+  height: 13px;
+  background: rgba(240, 235, 200, 0.6);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.06);
+  transform: translateX(-50%) rotate(4deg);
+}
+
+[data-theme='locker'] .lock-body {
+  padding-top: 18px;
+}
+
+[data-theme='locker'] .clue-code .sym:not(.sym-color) {
+  text-transform: uppercase;
+}
+
+[data-theme='locker'] .clue-list li:nth-child(odd) .clue {
+  rotate: -0.5deg;
+}
+
+[data-theme='locker'] .clue-list li:nth-child(even) .clue {
+  rotate: 0.4deg;
+}
+
+/* ======================================================================
+   Cofre / Safe — bottle-green enamel, gold pinstripes, brass hardware
+   ====================================================================== */
+
+[data-theme='safe'] {
+  color-scheme: dark;
+  --room-color: #0f3727;
+  --room:
+    radial-gradient(90% 60% at 50% 25%, rgba(40, 120, 84, 0.55), transparent 70%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28'%3E%3Cpath d='M14 3L25 14L14 25L3 14Z' fill='none' stroke='%23d8b45a' stroke-opacity='.12'/%3E%3Ccircle cx='14' cy='14' r='1.2' fill='%23d8b45a' fill-opacity='.16'/%3E%3C/svg%3E") 0 0 / 28px 28px,
+    linear-gradient(180deg, #124130, #0b2d20);
+  --ink: #f4ecd6;
+  --ink-muted: #dccfa9;
+  --title-ink: #ecd48d;
+
+  --surface: #f6efda;
+  --surface-ink: #173826;
+  --surface-muted: #4a5a3f;
+  --surface-edge: #8d7a45;
+
+  /* Clues: engraved brass plates with two slotted screws. */
+  --plate: linear-gradient(180deg, #edd481, #c9a24c 55%, #b08a36);
+  --plate-ink: #2e2106;
+  --plate-muted: #4a370c;
+  --plate-edge: #6e5216;
+  --plate-radius: 3px;
+  --plate-screw:
+    radial-gradient(circle at 11px 50%, #6e5216 0 1px, transparent 1.5px),
+    radial-gradient(circle at 11px 50%, #b08a36 0 3.5px, #f3dd96 4px 4.5px, #6e5216 5px, transparent 5.5px),
+    radial-gradient(circle at calc(100% - 11px) 50%, #b08a36 0 3.5px, #f3dd96 4px 4.5px, #6e5216 5px, transparent 5.5px);
+  --plate-pad-left: 24px;
+  --plate-pad-right: 24px;
+  --plate-shadow: 0 2px 0 #4f3a0d, 0 5px 10px rgba(0, 0, 0, 0.45);
+  --plate-emboss: 0 1px 0 rgba(255, 244, 210, 0.6);
+  --exact: #0f5a2e;
+  --misplaced: #8a1c12;
+
+  --lock-body: linear-gradient(165deg, #23704f, #14462f 60%, #1b573c);
+  --lock-edge: #07190f;
+  --lock-radius: 10px;
+  --bolt: linear-gradient(180deg, #f3dd96, #a57d2c);
+  --label-bg: linear-gradient(180deg, #edd481, #b08a36);
+  --label-ink: #2e2106;
+  --wheel: #0c0d0c;
+  --wheel-ink: #f4ecd6;
+  --wheel-rim: #b08a36;
+  --wheel-sel: #ecd48d;
+
+  --key: linear-gradient(180deg, #f8f1dc, #e2d5ae);
+  --key-ink: #173826;
+  --key-edge: #8d7a45;
+  --key-radius: 8px;
+  --btn: linear-gradient(180deg, #24714f, #175036);
+  --btn-ink: #f4ecd6;
+  --btn-edge: #071c12;
+  --btn-primary: linear-gradient(180deg, #f2d47c, #c79a3c);
+  --btn-primary-ink: #2a1e04;
+  --btn-primary-edge: #765614;
+
+  --accent: #765614;
+  --counter: #08180f;
+  --counter-ink: #ecd48d;
+  --focus: #ecd48d;
+  --highlight: #ffe9a8;
+}
+
+/* Gold pinstripe around the door and the room. */
+[data-theme='safe'] .lock-body {
+  box-shadow:
+    inset 0 0 0 5px #1a573b,
+    inset 0 0 0 6px #d8b45a,
+    inset 0 0 0 8px #1a573b,
+    inset 0 0 0 9px rgba(216, 180, 90, 0.5),
+    0 0 0 1px #07190f,
+    0 16px 30px -10px rgba(0, 0, 0, 0.7);
+  padding: 18px 20px 24px;
+}
+
+[data-theme='safe'] .lock-label::before {
+  content: 'Nº ';
+}
+
+html[data-theme='safe'] body::after {
+  inset: 8px;
+  border: 1px solid rgba(216, 180, 90, 0.5);
+  border-radius: 12px;
+  outline: 1px solid rgba(216, 180, 90, 0.25);
+  outline-offset: 4px;
+}
+
+/* ======================================================================
+   Banco / Bank vault — brushed steel, round door with bolts, marble room
+   ====================================================================== */
+
+[data-theme='bank'] {
+  color-scheme: light;
+  --room-color: #cfd2d6;
+  --room:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005 .014' numOctaves='5' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .38 0 0 0 0 .42 1 0 0 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0 0 0 .5 0 0 0 0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E") 0 0 / 480px 480px,
+    linear-gradient(180deg, #e6e7e9, #c5c8cd);
+  --ink: #15181c;
+  --ink-muted: #3d434b;
+  --title-ink: #1b2733;
+
+  --surface: #f5f6f8;
+  --surface-ink: #15181c;
+  --surface-muted: #424a54;
+  --surface-edge: #7c838c;
+
+  /* Clues: stamped steel plates with rivets. */
+  --plate: linear-gradient(180deg, #f3f4f6, #c4c9d0);
+  --plate-ink: #15181c;
+  --plate-muted: #3a4048;
+  --plate-edge: #7c838c;
+  --plate-radius: 4px;
+  --plate-screw:
+    radial-gradient(circle at 10px 50%, #a2a9b2 0 3.5px, #fff 4px 4.5px, #6b727b 5px, transparent 5.5px),
+    radial-gradient(circle at calc(100% - 10px) 50%, #a2a9b2 0 3.5px, #fff 4px 4.5px, #6b727b 5px, transparent 5.5px);
+  --plate-pad-left: 22px;
+  --plate-pad-right: 22px;
+  --plate-shadow: 0 2px 0 #7c838c, 0 5px 10px rgba(30, 40, 50, 0.22);
+  --exact: #17693a;
+  --misplaced: #8a4e00;
+
+  /* The vault door: concentric brushing with a sheen. */
+  --lock-body:
+    conic-gradient(from 20deg, rgba(255, 255, 255, 0.4), transparent 22%, rgba(255, 255, 255, 0.3) 50%, transparent 74%, rgba(255, 255, 255, 0.4)),
+    repeating-radial-gradient(circle at 50% 50%, #c9ced5 0 1px, #aeb4bc 1px 2px);
+  --lock-edge: #5d646d;
+  --lock-radius: 34px;
+  --lock-ink: #15181c;
+  --lock-deco: radial-gradient(circle, #7d848d 0 3px, #eef0f2 3.5px 4px, transparent 4.5px) 0 0 / 22px 22px;
+  --bolt: linear-gradient(180deg, #f1f3f5, #8e959e);
+  --label-bg: #22272e;
+  --label-ink: #e9eef3;
+  --wheel: #1b1e22;
+  --wheel-ink: #eef3f8;
+  --wheel-rim: #6b727b;
+  --wheel-sel: #2f7df0;
+
+  --key: linear-gradient(180deg, #f6f7f8, #c9ced5);
+  --key-ink: #15181c;
+  --key-edge: #6f7680;
+  --key-radius: 6px;
+  --btn: linear-gradient(180deg, #f6f7f8, #c9ced5);
+  --btn-ink: #15181c;
+  --btn-edge: #6f7680;
+  --btn-radius: 6px;
+  --btn-primary: linear-gradient(180deg, #3d709d, #2a547a);
+  --btn-primary-ink: #ffffff;
+  --btn-primary-edge: #15324c;
+
+  --accent: #2a547a;
+  --counter: #101317;
+  --counter-ink: #8fd0ff;
+  --focus: #1f5fd1;
+  --highlight: #1f5fd1;
+}
+
+/* Rivets only in a ring around the door. */
+[data-theme='bank'] .lock-deco {
+  padding: 14px;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  inset: 3px;
+}
+
+[data-theme='bank'] .lock-body {
+  padding: 18px 22px 24px;
+  box-shadow:
+    inset 0 0 0 10px rgba(255, 255, 255, 0.12),
+    inset 0 0 0 11px rgba(0, 0, 0, 0.25),
+    inset 0 3px 2px rgba(255, 255, 255, 0.7),
+    inset 0 -5px 10px rgba(0, 0, 0, 0.35),
+    0 0 0 2px #5d646d,
+    0 0 0 7px #9aa1aa,
+    0 0 0 8px #5d646d,
+    0 18px 34px -12px rgba(20, 30, 40, 0.6);
+}
+
+/* Three locking bolts on each side. */
+[data-theme='bank'] .bolt {
+  height: 16px;
+  top: -8px;
+  box-shadow:
+    0 -28px 0 #b4bac2,
+    0 28px 0 #b4bac2,
+    0 2px 3px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='bank'] .lock-bolts {
+  inset: auto -20px 50% -20px;
+}
+
+[data-theme='bank'] .lock.open .bolt-l {
+  transform: translateX(20px);
+}
+
+[data-theme='bank'] .lock.open .bolt-r {
+  transform: translateX(-20px);
+}
+
+/* ======================================================================
+   Museu / Museum — oxblood gallery, glass display case, brass plaques
+   ====================================================================== */
+
+[data-theme='museum'] {
+  color-scheme: dark;
+  --room-color: #3e0f19;
+  --room:
+    radial-gradient(55% 40% at 50% 0%, rgba(255, 226, 170, 0.3), transparent 70%),
+    linear-gradient(180deg, transparent 74%, rgba(0, 0, 0, 0.35) 74%, rgba(0, 0, 0, 0.35) 74.3%, rgba(212, 175, 90, 0.4) 74.3%, rgba(212, 175, 90, 0.4) 74.7%, rgba(0, 0, 0, 0.28) 74.7%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 14px, transparent 14px 28px),
+    linear-gradient(180deg, #4d1622, #3a0e17);
+  --ink: #f6ead8;
+  --ink-muted: #e6d0b5;
+  --title-ink: #f1d79a;
+
+  --surface: #2a0b12;
+  --surface-ink: #f6ead8;
+  --surface-muted: #dcc3a6;
+  --surface-edge: #0d0305;
+
+  --font-title: 'Cinzel', Georgia, 'Times New Roman', serif;
+  --title-weight: 700;
+  --title-spacing: 0.08em;
+
+  /* Clues: brass museum plaques. */
+  --plate: linear-gradient(180deg, #ecd48d, #c29b45 60%, #a88332);
+  --plate-ink: #2d1d05;
+  --plate-muted: #4b3610;
+  --plate-edge: #5e4512;
+  --plate-radius: 2px;
+  --plate-screw:
+    radial-gradient(circle at 9px 9px, #fff2c4 0 1px, #8a6a22 1.5px 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 9px) 9px, #fff2c4 0 1px, #8a6a22 1.5px 2.5px, transparent 3px),
+    radial-gradient(circle at 9px calc(100% - 9px), #fff2c4 0 1px, #8a6a22 1.5px 2.5px, transparent 3px),
+    radial-gradient(circle at calc(100% - 9px) calc(100% - 9px), #fff2c4 0 1px, #8a6a22 1.5px 2.5px, transparent 3px);
+  --plate-pad-left: 18px;
+  --plate-pad-right: 18px;
+  --plate-shadow: 0 0 0 3px rgba(0, 0, 0, 0.25), 0 6px 12px rgba(0, 0, 0, 0.5);
+  --plate-emboss: 0 1px 0 rgba(255, 244, 210, 0.55);
+  --exact: #0e5a2c;
+  --misplaced: #7d1410;
+
+  /* The lock in a glass case on a plinth. */
+  --lock-body:
+    linear-gradient(125deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.04) 38%, rgba(255, 255, 255, 0.12) 52%, rgba(255, 255, 255, 0.02) 70%),
+    linear-gradient(rgba(25, 4, 9, 0.5), rgba(25, 4, 9, 0.5));
+  --lock-edge: rgba(255, 240, 220, 0.45);
+  --lock-radius: 3px;
+  --lock-deco: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.35) 50%, transparent 60%) -150% 0 / 250% 100% no-repeat;
+  --bolts-show: none;
+  --label-bg: linear-gradient(180deg, #ecd48d, #a88332);
+  --label-ink: #2d1d05;
+  --label-font: 'Cinzel', Georgia, serif;
+  --wheel: #f1e8d6;
+  --wheel-ink: #2a1a10;
+  --wheel-rim: #a88332;
+  --wheel-radius: 4px;
+  --wheel-sel: #f1d79a;
+  --lit: #ffe08a;
+  --lit-ink: #2a1a05;
+
+  --key: linear-gradient(180deg, #2c1e21, #140d0f);
+  --key-ink: #f1d79a;
+  --key-edge: #000;
+  --key-radius: 5px;
+  --btn: linear-gradient(180deg, #2c1e21, #140d0f);
+  --btn-ink: #f1d79a;
+  --btn-edge: #000;
+  --btn-radius: 5px;
+  --btn-primary: linear-gradient(180deg, #f2d88e, #c29b45);
+  --btn-primary-ink: #2a1a05;
+  --btn-primary-edge: #6d5216;
+
+  --accent: #f1d79a;
+  --counter: #160407;
+  --counter-ink: #f1d79a;
+  --focus: #f1d79a;
+  --highlight: #ffe9a8;
+}
+
+[data-theme='museum'] .lock-body {
+  padding: 16px 18px 22px;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 240, 220, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    0 0 40px -10px rgba(255, 226, 170, 0.35);
+}
+
+/* Plinth. */
+[data-theme='museum'] .lock::after {
+  content: '';
+  display: block;
+  width: calc(100% + 28px);
+  height: 20px;
+  border-top: 3px solid #c29b45;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #2a1a12, #0f0806);
+  box-shadow: 0 10px 18px -6px rgba(0, 0, 0, 0.7);
+}
+
+[data-theme='museum'] .wheel-window::after {
+  background:
+    linear-gradient(180deg, transparent 42%, rgba(255, 255, 255, 0.3) 49%, transparent 57%),
+    linear-gradient(180deg, rgba(60, 30, 10, 0.6), transparent 32%, transparent 68%, rgba(60, 30, 10, 0.6));
+}
+
+[data-theme='museum'] .clue-num {
+  font: 700 0.72rem var(--font-title);
+}
+
+[data-theme='museum'] .lock.open .lock-deco {
+  animation: sheen 0.9s ease-in-out 0.3s both;
+}
+
+@keyframes sheen {
+  to {
+    background-position: 250% 0;
+  }
+}
+
+/* ======================================================================
+   Casino — green felt, slot-machine reels, chips, marquee lights
+   ====================================================================== */
+
+[data-theme='casino'] {
+  color-scheme: dark;
+  --room-color: #0b4a2d;
+  --room:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .22 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E") 0 0 / 160px 160px,
+    radial-gradient(ellipse at 50% 30%, #157443, #0b4a2d 60%, #052616);
+  --room-deco:
+    radial-gradient(circle at 12px 9px, #fff6cf 0 3px, #f5c542 3.5px 4.5px, transparent 5.5px) 0 0 / 24px 18px repeat-x,
+    linear-gradient(180deg, #2a0a0e 0 18px, #f5c542 18px 20px, transparent 20px);
+  --ink: #f6f1e3;
+  --ink-muted: #d8e8dc;
+  --title-ink: #f5c542;
+
+  --surface: #141414;
+  --surface-ink: #f6f1e3;
+  --surface-muted: #d2cbb6;
+  --surface-edge: #6b5520;
+
+  /* Clues: playing cards. */
+  --plate: linear-gradient(180deg, #fffdf7, #f1ece0);
+  --plate-ink: #1a1a1a;
+  --plate-muted: #4a4a4a;
+  --plate-edge: #c9c1ad;
+  --plate-radius: 8px;
+  --plate-screw: none;
+  --plate-pad-left: 14px;
+  --plate-shadow: 0 3px 6px rgba(0, 0, 0, 0.45);
+  --plate-emboss: none;
+  --exact: #0d7a3e;
+  --misplaced: #9a6b00;
+
+  /* The lock: a slot-machine cabinet with bulbs. */
+  --lock-body: linear-gradient(180deg, #c0182f, #7c0c1b 70%, #5e0914);
+  --lock-edge: #3b050c;
+  --lock-radius: 14px;
+  --lock-deco:
+    radial-gradient(circle, #fff6cf 0 2.5px, #f5c542 3px 3.5px, transparent 4px) 6px 2px / 16px 10px repeat-x,
+    radial-gradient(circle, #fff6cf 0 2.5px, #f5c542 3px 3.5px, transparent 4px) 6px calc(100% - 2px) / 16px 10px repeat-x;
+  --bolts-show: none;
+  --label-bg: #111;
+  --label-ink: #f5c542;
+  --wheel: #f7f3ea;
+  --wheel-ink: #1a1a1a;
+  --wheel-rim: #f5c542;
+  --wheel-radius: 4px;
+  --wheel-sel: #fff6cf;
+  --lit: #f5c542;
+  --lit-ink: #2a1a00;
+
+  --chip: #b3121f;
+  --key-ink: #ffffff;
+  --key-edge: #5e0914;
+  --btn: linear-gradient(180deg, #2c2c2c, #111);
+  --btn-ink: #f6f1e3;
+  --btn-edge: #000;
+  --btn-primary: linear-gradient(180deg, #ffd96a, #e2a92c);
+  --btn-primary-ink: #2a1a00;
+  --btn-primary-edge: #8a5f0a;
+
+  --accent: #f5c542;
+  --counter: #050505;
+  --counter-ink: #ff5a4f;
+  --focus: #fff6cf;
+  --highlight: #f5c542;
+}
+
+[data-theme='casino'].screen {
+  padding-top: max(30px, env(safe-area-inset-top));
+}
+
+[data-theme='casino'] .lock-body {
+  padding: 16px 16px 22px;
+  box-shadow:
+    inset 0 0 0 3px #f5c542,
+    inset 0 0 0 5px #7c0c1b,
+    inset 0 2px 1px rgba(255, 255, 255, 0.35),
+    0 0 0 1px #3b050c,
+    0 16px 30px -10px rgba(0, 0, 0, 0.7);
+}
+
+/* Reels: white drums with a strong curve. */
+[data-theme='casino'] .wheel-window::after {
+  background:
+    linear-gradient(180deg, transparent 42%, rgba(255, 255, 255, 0.5) 49%, transparent 57%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.05) 32%, transparent 45%, transparent 55%, rgba(0, 0, 0, 0.05) 68%, rgba(0, 0, 0, 0.55));
+}
+
+[data-theme='casino'] .lock.open .lock-deco {
+  animation: marquee 0.24s steps(2, jump-none) 0.3s 6;
+}
+
+@keyframes marquee {
+  50% {
+    opacity: 0.2;
+  }
+}
+
+/* Keys: chips, alternating red and black. */
+[data-theme='casino'] .key {
+  --edge: var(--key-edge);
+  justify-self: center;
+  width: min(100%, 54px);
+  height: auto;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border-color: rgba(0, 0, 0, 0.5);
+  background:
+    radial-gradient(circle, var(--chip) 0 50%, rgba(255, 255, 255, 0.9) 50% 53%, var(--chip) 53% 62%, transparent 62.5%),
+    repeating-conic-gradient(var(--chip) 0 22.5deg, #f7f3ea 22.5deg 45deg);
+  color: var(--key-ink);
+}
+
+[data-theme='casino'] .key:nth-child(even) {
+  --chip: #1b1b1b;
+  --key-edge: #000;
+}
+
+[data-theme='casino'] .key-erase {
+  --chip: #1d5fa8;
+  --key-edge: #0c2a4d;
+}
+
+[data-theme='casino'] .level {
+  --chip: #b3121f;
+  background: var(--chip);
+}
+
+[data-theme='casino'] .level:nth-child(even) {
+  --chip: #1b1b1b;
+  --key-edge: #000;
+}
+
+[data-theme='casino'] .level[data-status='solved'],
+[data-theme='casino'] .level[data-status='clean'] {
+  background: var(--lit);
+}
+
+/* ======================================================================
+   Cofre Diário / Daily Vault — a night blueprint
+   ====================================================================== */
+
+[data-theme='daily'] {
+  color-scheme: dark;
+  --room-color: #0b1d38;
+  --room:
+    linear-gradient(rgba(126, 178, 255, 0.2) 1px, transparent 1px) 0 0 / 120px 120px,
+    linear-gradient(90deg, rgba(126, 178, 255, 0.2) 1px, transparent 1px) 0 0 / 120px 120px,
+    linear-gradient(rgba(126, 178, 255, 0.08) 1px, transparent 1px) 0 0 / 24px 24px,
+    linear-gradient(90deg, rgba(126, 178, 255, 0.08) 1px, transparent 1px) 0 0 / 24px 24px,
+    radial-gradient(ellipse at 50% 0%, #17406f, #0b1d38 70%);
+  --ink: #e3eeff;
+  --ink-muted: #b6cae8;
+  --title-ink: #ffffff;
+
+  --surface: #0f2a4f;
+  --surface-ink: #e3eeff;
+  --surface-muted: #b6cae8;
+  --surface-edge: #061226;
+
+  /* Clues: dashed annotation boxes. */
+  --plate: linear-gradient(rgba(11, 29, 56, 0.85), rgba(11, 29, 56, 0.85));
+  --plate-ink: #e3eeff;
+  --plate-muted: #b6cae8;
+  --plate-edge: #7fb2ff;
+  --plate-radius: 2px;
+  --plate-screw: none;
+  --plate-pad-left: 12px;
+  --plate-shadow: none;
+  --plate-emboss: none;
+  --exact: #6ee7a8;
+  --misplaced: #ffd166;
+
+  /* The lock as a technical drawing. */
+  --lock-body: linear-gradient(rgba(16, 44, 84, 0.9), rgba(16, 44, 84, 0.9));
+  --lock-edge: #9cc7ff;
+  --lock-radius: 14px;
+  --lock-deco:
+    linear-gradient(#9cc7ff, #9cc7ff) 8px 8px / 10px 1px no-repeat,
+    linear-gradient(#9cc7ff, #9cc7ff) 8px 8px / 1px 10px no-repeat,
+    linear-gradient(#9cc7ff, #9cc7ff) calc(100% - 8px) calc(100% - 8px) / 10px 1px no-repeat,
+    linear-gradient(#9cc7ff, #9cc7ff) calc(100% - 8px) calc(100% - 8px) / 1px 10px no-repeat;
+  --shackle-show: block;
+  --bolts-show: none;
+  --shackle: #9cc7ff;
+  --label-bg: transparent;
+  --label-ink: #ffd166;
+  --label-font: var(--font-mono);
+  --wheel: #0e2850;
+  --wheel-ink: #e3eeff;
+  --wheel-rim: #6fa8ff;
+  --wheel-sel: #ffd166;
+  --lit: #6ee7a8;
+  --lit-ink: #052014;
+
+  --key: linear-gradient(180deg, #143566, #0e2850);
+  --key-ink: #e3eeff;
+  --key-edge: #061226;
+  --key-radius: 6px;
+  --btn: linear-gradient(180deg, #143566, #0e2850);
+  --btn-ink: #e3eeff;
+  --btn-edge: #061226;
+  --btn-radius: 6px;
+  --btn-primary: linear-gradient(180deg, #ffe08f, #ffc94d);
+  --btn-primary-ink: #1c1400;
+  --btn-primary-edge: #9a7420;
+
+  --accent: #ffd166;
+  --counter: #061226;
+  --counter-ink: #7fd4ff;
+  --focus: #ffd166;
+  --highlight: #ffd166;
+}
+
+[data-theme='daily'] .clue {
+  border-style: dashed;
+  border-width: 1.5px;
+}
+
+[data-theme='daily'] .lock-body {
+  box-shadow: inset 0 0 0 2px #9cc7ff, 0 0 0 4px rgba(11, 29, 56, 0.9), 0 0 0 5px rgba(156, 199, 255, 0.4);
+}
+
+/* Outline-only shackle with a dashed centre line. */
+[data-theme='daily'] .lock-shackle {
+  --shackle-w: 3px;
+  width: min(54%, 160px);
+  height: 58px;
+  margin-bottom: -10px;
+  box-shadow: none;
+}
+
+[data-theme='daily'] .lock-shackle::before {
+  inset: 9px 9px -1px;
+  border: 2px dashed rgba(156, 199, 255, 0.6);
+  border-bottom: 0;
+}
+
+[data-theme='daily'] .lock-label {
+  box-shadow: none;
+  border: 1px solid currentColor;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+
+[data-theme='daily'] .key,
+[data-theme='daily'] .btn:not(.btn-primary),
+[data-theme='daily'] .level {
+  border-color: #6fa8ff;
+}
+
+/* Home entry for the Daily Vault: a piece of blueprint. */
+.entry-daily {
+  background: var(--room);
+  background-color: var(--room-color);
+  color: var(--ink);
+}
+
+.entry-daily .entry-line {
+  color: var(--ink-muted);
+}

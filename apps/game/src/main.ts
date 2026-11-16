@@ -39,6 +39,7 @@ import { newGame, type GameState } from './state';
 import { loadProgress, saveProgress } from './storage';
 import './fonts.css';
 import './styles.css';
+import './themes.css';
 import { h } from './ui/dom';
 import { mountFreePlay } from './ui/freePlay';
 import { icon } from './ui/icons';
