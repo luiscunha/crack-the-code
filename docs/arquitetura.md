@@ -319,6 +319,93 @@ selecionada para copiar à mão. Cancelar a folha de partilha não mostra erro.
   `disabled` com o motivo no `aria-label`/`title` e o motivo do mundo escrito no cartão.
 - Bundle: JS 48 → 103 KB (17 → 28 KB gzip); a campanha estática é ~5 KB gzip do aumento.
 
+### D21 — Sistema de temas ("lugares")
+Resposta ao playtest do dono ("parece feito por IA", "cada cofre devia ter a sua cara").
+O cadeado é um objeto físico e o herói de cada ecrã; o resto é a sala à volta dele.
+- Todos os valores visuais passam por propriedades CSS (`--room`, `--plate*`, `--lock-*`,
+  `--wheel*`, `--key*`, `--btn*`, `--surface*`, `--counter*`, `--lit*`…). Os componentes
+  nunca têm cores fixas; a estrutura do ecrã de puzzle é igual em todos os temas.
+- `ui/theme.ts`: `ThemeId = 'workshop' | 'daily' | WorldId`. `main.ts` decide o tema de cada
+  ecrã (`themeOf`: nível da campanha → o seu mundo; diário → `daily`; jogo livre, início,
+  mapa, estatísticas → `workshop`) e `applyTheme` põe `data-theme` na raiz do ecrã e em
+  `<html>` (o fundo da página e o diálogo final ficam no mesmo lugar) e acerta
+  `meta[name=theme-color]`.
+- `styles.css`: tokens do `workshop` (bancada de arrombador: placa perfurada, candeeiro
+  quente; claro e escuro por `prefers-color-scheme`) e todos os componentes.
+  `themes.css`: um bloco de tokens por lugar + poucas regras decorativas (CSS/SVG inline,
+  sem imagens). Os mundos têm paleta fixa (são lugares, não variantes claro/escuro).
+  - Cacifo: aço pintado azul-petróleo com grelhas de ventilação, pistas em fita Dymo, cadeado
+    de combinação com arco cromado, número do nível num papel colado com fita
+    (Permanent Marker).
+  - Cofre: esmalte verde-garrafa com filetes dourados, placas de latão aparafusadas,
+    trincos de latão.
+  - Banco: mármore claro (SVG `feTurbulence`), porta de cofre em aço escovado com anel de
+    rebites e três trincos por lado, placas de aço rebitadas.
+  - Museu: parede cor de sangue de boi com rodapé e foco de luz, cadeado numa vitrina de
+    vidro sobre plinto, placas de latão de museu, títulos em Cinzel (só neste tema).
+  - Casino: feltro verde, faixa de lâmpadas, cadeado como slot machine (rolos brancos, luzes
+    a piscar ao abrir), teclas como fichas vermelhas/pretas, pistas como cartas.
+  - Cofre Diário: planta técnica noturna (grelha azul, cadeado desenhado a traço, arco só em
+    contorno, pistas em caixas tracejadas).
+- O mapa mostra cada mundo num painel com o seu próprio tema (pré-visualização dos lugares);
+  um mundo bloqueado fica atrás de uma persiana metálica com o motivo escrito numa placa.
+- As **notas** são o mesmo bloco de papel em todos os temas (e o painel de ajuda um post-it):
+  os três estados (desconhecido / excluído / confirmado) leem-se igual em todo o lado.
+  Contraste verificado por script para os pares texto/fundo de cada tema (AA ≥ 4,5 em texto
+  pequeno; pinos e realces ≥ 3).
+- Ícones: `ui/icons.ts`, SVG inline numa grelha 24×24 com traço de 2 px (`currentColor`);
+  nenhum emoji na UI (o texto de partilha, D19, continua com os seus símbolos).
+
+### D22 — Tipos de letra
+Alojados com a app (pacotes `@fontsource/*`, sem CDN: a app vai funcionar offline no
+Capacitor). `fonts.css` declara só `woff2`, subconjunto latino e os pesos usados:
+Big Shoulders Stencil Display 800 (títulos, números grandes), JetBrains Mono 500/700
+(dígitos, pistas, contadores), IBM Plex Sans 400/600 (texto), Cinzel 700 (museu) e
+Permanent Marker (etiqueta do cacifo). Total 150 KB; o browser só descarrega uma face
+quando há texto que a usa, por isso o normal são ~105 KB e Cinzel/Permanent Marker só
+chegam no Museu/Cacifo. `font-display: swap`.
+
+### D23 — Cadeado mecânico
+- Cada posição é uma roda (botão real, com `aria-label`/`aria-current` como antes) com o
+  símbolo e os vizinhos acima/abaixo (curvatura por gradientes, faixa de brilho). Quando o
+  valor muda, a fita rola 200 ms na direção do novo valor; no primeiro desenho não anima.
+- O chassis (arco, trincos laterais, corpo, etiqueta, camada decorativa) é o mesmo para
+  todos; cada tema escolhe as peças (`--shackle-show`, `--bolts-show`, `--lock-deco`).
+  O mesmo chassis serve o cadeado decorativo do início (`createShowpieceLock`, 4-5-9).
+- Abrir: as rodas acendem uma a uma, depois o arco salta / os trincos recolhem (e efeitos
+  do tema: brilho no vidro do museu, lâmpadas do casino). O diálogo final espera 1,1 s;
+  com `prefers-reduced-motion` todas as animações e transições ficam instantâneas e o
+  diálogo abre logo. O erro continua a abanar o cadeado (contorno vermelho sem movimento).
+- Botões e teclas são peças físicas: aresta inferior visível que desaparece quando se
+  carrega (`translateY`).
+
+### D24 — Recomeçar
+- Ação pura `restart` no redutor: volta ao tabuleiro inicial (`emptyBoard`: cadeado, notas,
+  pistas esgotadas e ajudas reconhecidas) num único passo do histórico, por isso um só
+  "Desfazer" repõe tudo. Seleção volta à posição 1; o histórico futuro (redo) é limpo como
+  em qualquer ação nova.
+- **Não** repõe `wrongSubmissions`, `hintsUsed` nem o relógio: recomeçar não pode apagar
+  erros ou ajudas do troféu "limpo" (mesma regra do undo, D12).
+- Sem efeito (e sem entrada no histórico) num tabuleiro já inicial ou num puzzle resolvido;
+  `canRestart` desativa o botão nesses casos.
+- UI: botão com ícone na fila de ações; confirmação em linha (não modal) que explica que
+  tempo, erros e ajudas continuam a contar; Esc cancela; depois de recomeçar o estado diz
+  que "Desfazer" repõe o tabuleiro. O instantâneo para retomar é gravado como qualquer
+  outra ação (testado: retomar depois de recomeçar dá o tabuleiro inicial com os contadores).
+
+### D25 — Jogo livre e ecrã inicial
+- O início deixou de ter a lista de bandas: marca + cadeado decorativo, "Continuar"
+  (quando há puzzle em curso), Campanha (progresso, barra e uma amostra do material de cada
+  mundo, bloqueados com persiana), Cofre Diário (#N, banda, resolvido, sequência; em estilo
+  planta) e Jogo livre; estatísticas e língua são botões de ícone no topo.
+- Jogo livre: primeiro o botão, depois a dificuldade. O ecrã `free` lista as seis bandas
+  (nome, descrição, tamanho, medidor de 6 luzes, resolvidos) e tocar numa começa logo a
+  gerar (sem botão "Novo puzzle"). Voltar do ecrã → início; voltar de um puzzle livre →
+  lista de dificuldades. `?band=&seed=` continua a funcionar (abre a lista por baixo).
+  A última banda jogada (`ctc.band`) recebe o foco.
+- Bundle: JS 103 → 111 KB (27,8 → 30,5 KB gzip); CSS 13 → 46 KB (4 → 11,6 KB gzip; os
+  seis temas são ~5 KB gzip); fontes 150 KB `woff2` (D22).
+
 ### Limitações conhecidas
 - Os passos T3/T4 são "consistência em bloco": um passo pode excluir uma dúzia de valores
   de uma vez. Resolvido na UI com ajudas focadas (D13), mas a explicação continua a ser
@@ -327,6 +414,8 @@ selecionada para copiar à mão. Cancelar a folha de partilha não mostra erro.
   aparece no máximo 3 vezes"): corretos mas pouco úteis como ajuda.
 - Ajudas T5 podem citar 5–6 pistas ("as pistas … deixariam de ser possíveis em conjunto").
 - Sem testes de DOM (sem jsdom); a UI é verificada por typecheck, build e no browser.
+  O redesenho de D21–D25 foi feito sem browser (só build/servidor); falta a verificação
+  visual a 375 px e 1280 px de cada tema.
 - Na variante L6 com 6 cores, um palpite sem repetições mostra sempre as 6 cores, logo
   `exact + misplaced` é igual em todas as pistas (o nº de cores distintas do código).
   7 ou 8 cores resolveriam isso à custa de tempo de geração (ver D8).
