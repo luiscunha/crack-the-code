@@ -3,6 +3,7 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 import {
   canRedo,
+  canRestart,
   canUndo,
   elapsedMs,
   isClean,
@@ -210,5 +211,89 @@ describe('validation', () => {
 
   it('measures elapsed time from the given start', () => {
     expect(elapsedMs(game(), 4500)).toBe(3500);
+  });
+});
+
+describe('restart', () => {
+  const played = (): GameState =>
+    run(game(), [
+      ...type(1, 2, 3),
+      { type: 'cycleNote', position: 0, symbol: 4 },
+      { type: 'strikeSymbol', symbol: 5 },
+      { type: 'toggleExhausted', clue: 2 },
+      { type: 'applyNotes', patch: { acknowledge: 3 } },
+      { type: 'submit', now: 2000 },
+      { type: 'useHint' },
+    ]);
+
+  it('clears lock, notes, exhausted clues and acknowledgements in one step', () => {
+    const before = played();
+    const s = reduce(before, { type: 'restart' });
+    expect(sameBoard(s.board, game().board)).toBe(true);
+    expect(s.past.length).toBe(before.past.length + 1);
+    expect(s.future).toEqual([]);
+    expect(s.selected).toBe(0);
+    expect(canRestart(before)).toBe(true);
+    expect(canRestart(s)).toBe(false);
+  });
+
+  it('keeps counters and the clock', () => {
+    const before = played();
+    const s = reduce(before, { type: 'restart' });
+    expect(s.wrongSubmissions).toBe(before.wrongSubmissions);
+    expect(s.hintsUsed).toBe(before.hintsUsed);
+    expect(s.startedAt).toBe(before.startedAt);
+    expect(s.wrongSubmissions).toBe(1);
+    expect(s.hintsUsed).toBe(1);
+  });
+
+  it('is undone by a single undo, and redone by redo', () => {
+    const before = played();
+    const restarted = reduce(before, { type: 'restart' });
+    const undone = reduce(restarted, { type: 'undo' });
+    expect(sameBoard(undone.board, before.board)).toBe(true);
+    expect(undone.past).toEqual(before.past);
+    const redone = reduce(undone, { type: 'redo' });
+    expect(sameBoard(redone.board, restarted.board)).toBe(true);
+  });
+
+  it('is a no-op on the initial board (no history entry)', () => {
+    const fresh = game();
+    expect(reduce(fresh, { type: 'restart' })).toBe(fresh);
+    const typedAndErased = run(fresh, [...type(1), { type: 'erase' }]);
+    const s = reduce(typedAndErased, { type: 'restart' });
+    expect(s).toBe(typedAndErased);
+  });
+
+  it('does nothing once solved', () => {
+    const solved = run(game(), [...type(7, 8, 9), { type: 'submit', now: 3000 }]);
+    expect(reduce(solved, { type: 'restart' })).toBe(solved);
+    expect(canRestart(solved)).toBe(false);
+  });
+
+  it('restart then undo equals the state before, for random play', () => {
+    const action = fc.oneof(
+      fc.integer({ min: 0, max: 9 }).map((symbol): Action => ({ type: 'input', symbol })),
+      fc.record({ position: fc.integer({ min: 0, max: 2 }), symbol: fc.integer({ min: 0, max: 9 }) }).map(
+        (c): Action => ({ type: 'cycleNote', ...c }),
+      ),
+      fc.integer({ min: 0, max: 4 }).map((clue): Action => ({ type: 'toggleExhausted', clue })),
+      fc.constant<Action>({ type: 'erase' }),
+      fc.constant<Action>({ type: 'undo' }),
+    );
+    fc.assert(
+      fc.property(fc.array(action, { maxLength: 30 }), (actions) => {
+        const before = run(game(), actions);
+        const restarted = reduce(before, { type: 'restart' });
+        if (restarted === before) {
+          expect(sameBoard(before.board, game().board)).toBe(true);
+          return;
+        }
+        const undone = reduce(restarted, { type: 'undo' });
+        expect(sameBoard(undone.board, before.board)).toBe(true);
+        expect(undone.past).toEqual(before.past);
+        expect(undone.wrongSubmissions).toBe(before.wrongSubmissions);
+      }),
+    );
   });
 });

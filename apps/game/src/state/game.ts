@@ -152,6 +152,12 @@ export function reduce(state: GameState, action: Action): GameState {
     }
     case 'applyNotes':
       return commit(state, applyPatch(board, action.patch));
+    case 'restart': {
+      // Not after solving; on an untouched board commit() adds no history entry.
+      if (isSolved(state)) return state;
+      const next = commit(state, emptyBoard(params, board.exhausted.length));
+      return next === state ? state : { ...next, selected: 0 };
+    }
     case 'undo': {
       const previous = state.past[state.past.length - 1];
       if (!previous) return state;
@@ -176,6 +182,11 @@ export function reduce(state: GameState, action: Action): GameState {
 
 export function canUndo(state: GameState): boolean {
   return state.past.length > 0;
+}
+
+/** True when restarting would change the board (anything typed, noted or marked). */
+export function canRestart(state: GameState): boolean {
+  return !isSolved(state) && !sameBoard(state.board, emptyBoard(state.params, state.board.exhausted.length));
 }
 
 export function canRedo(state: GameState): boolean {

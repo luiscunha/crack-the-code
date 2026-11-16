@@ -56,6 +56,8 @@ export type Action =
   | { type: 'strikeSymbol'; symbol: number }
   | { type: 'toggleExhausted'; clue: number }
   | { type: 'applyNotes'; patch: NotesPatch }
+  /** Back to the initial board in one undoable step; counters and clock are kept. */
+  | { type: 'restart' }
   | { type: 'undo' }
   | { type: 'redo' }
   | { type: 'submit'; now: number }

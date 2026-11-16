@@ -198,6 +198,7 @@ describe('saved game', () => {
     fc.record({ type: fc.constant('toggleExhausted' as const), clue: fc.nat(puzzle.clues.length - 1) }),
     fc.record({ type: fc.constant('applyNotes' as const), patch: fc.record({ acknowledge: fc.nat(20) }) }),
     fc.constant({ type: 'undo' as const }),
+    fc.constant({ type: 'restart' as const }),
     fc.constant({ type: 'useHint' as const }),
     fc.constant({ type: 'submit' as const, now: 5_000 }),
   );
@@ -223,6 +224,20 @@ describe('saved game', () => {
       }),
       { numRuns: 200 },
     );
+  });
+
+  it('resumes a restarted game on the initial board with its counters', () => {
+    let state = newGame({ params, solution: puzzle.solution, clueCount: puzzle.clues.length, startedAt: 1_000 });
+    for (let s = 0; s < L; s++) state = reduce(state, { type: 'input', symbol: s });
+    state = reduce(state, { type: 'submit', now: 2_000 });
+    state = reduce(state, { type: 'cycleNote', position: 0, symbol: 1 });
+    state = reduce(state, { type: 'restart' });
+    const saved = snapshotGame(state, 'free', 'medium:7', 61_000);
+    const restored = restoreGame(parseProgress(serializeProgress(setCurrent(emptyProgress(), saved))).current!, puzzle, 100_000)!;
+    const fresh = newGame({ params, solution: puzzle.solution, clueCount: puzzle.clues.length, startedAt: 0 });
+    expect(sameBoard(restored.board, fresh.board)).toBe(true);
+    expect(restored.wrongSubmissions).toBe(state.wrongSubmissions);
+    expect(elapsedMs(restored, 100_000)).toBe(60_000);
   });
 
   it('refuses a snapshot that does not fit the puzzle', () => {
