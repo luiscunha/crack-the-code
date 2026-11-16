@@ -989,3 +989,36 @@ h2 {
   height: 1.25em;
   flex: none;
 }
+
+.actions {
+  grid-template-columns: auto auto auto auto 1fr;
+}
+
+.status.status-info {
+  color: var(--muted);
+}
+
+.confirm {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.confirm-ask {
+  margin: 0;
+  font-weight: 700;
+}
+
+.confirm-note {
+  margin: 4px 0 10px;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}

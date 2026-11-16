@@ -120,6 +120,14 @@ export interface Messages {
     strikeLabel: (symbol: string, struck: boolean) => string;
     undo: string;
     redo: string;
+    restart: string;
+    restartAsk: string;
+    /** Why restarting does not reset the result (time, errors, hints keep counting). */
+    restartNote: string;
+    restartConfirm: string;
+    cancel: string;
+    /** Status after restarting (tells the player undo brings the board back). */
+    restarted: string;
     hint: string;
     validate: string;
     incomplete: string;

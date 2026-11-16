@@ -1,6 +1,6 @@
 import type { Puzzle } from '@ctc/engine';
 import type { Messages } from '../i18n';
-import { canRedo, canUndo, elapsedMs, newGame, reduce, type Action, type GameState } from '../state';
+import { canRedo, canRestart, canUndo, elapsedMs, newGame, reduce, type Action, type GameState } from '../state';
 import { symbolForKey } from '../symbols';
 import { createClues } from './clues';
 import { createHintPanel } from './hintPanel';
@@ -54,7 +54,8 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
     state = reduce(state, action);
     if (state === before) return;
     if (action.type === 'submit') onSubmitted();
-    else status.textContent = '';
+    else status.textContent = action.type === 'restart' ? m.puzzle.restarted : '';
+    status.classList.toggle('status-info', action.type === 'restart');
     render();
     opts.onState?.(state);
   };
@@ -86,7 +87,40 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
   undo.addEventListener('click', () => dispatch({ type: 'undo' }));
   redo.addEventListener('click', () => dispatch({ type: 'redo' }));
   validate.addEventListener('click', () => dispatch({ type: 'submit', now: now() }));
-  const actions = h('div', { class: 'actions' }, undo, redo, hintBtn, validate);
+  const restart = iconButton(m.puzzle.restart, 'restart', 'btn-restart');
+  restart.setAttribute('aria-expanded', 'false');
+  restart.setAttribute('aria-controls', 'restart-confirm');
+  const actions = h('div', { class: 'actions' }, undo, redo, restart, hintBtn, validate);
+
+  // Restart asks first (inline, no modal): it wipes minutes of notes, even if undo can bring them back.
+  const confirmYes = h('button', { type: 'button', class: 'btn btn-primary' }, icon('restart'), m.puzzle.restartConfirm);
+  const confirmNo = h('button', { type: 'button', class: 'btn' }, m.puzzle.cancel);
+  const confirm = h(
+    'div',
+    { id: 'restart-confirm', class: 'confirm', role: 'group', 'aria-labelledby': 'restart-ask', 'aria-describedby': 'restart-note', hidden: true },
+    h('p', { id: 'restart-ask', class: 'confirm-ask' }, m.puzzle.restartAsk),
+    h('p', { id: 'restart-note', class: 'confirm-note' }, m.puzzle.restartNote),
+    h('div', { class: 'confirm-actions' }, confirmNo, confirmYes),
+  );
+  const closeConfirm = (focus: HTMLElement | null): void => {
+    confirm.hidden = true;
+    restart.setAttribute('aria-expanded', 'false');
+    focus?.focus();
+  };
+  restart.addEventListener('click', () => {
+    if (!confirm.hidden) return closeConfirm(restart);
+    hints.close();
+    confirm.hidden = false;
+    restart.setAttribute('aria-expanded', 'true');
+    confirmNo.focus();
+  });
+  confirmNo.addEventListener('click', () => closeConfirm(restart));
+  confirmYes.addEventListener('click', () => {
+    closeConfirm(null);
+    hints.close();
+    dispatch({ type: 'restart' });
+    undo.focus();
+  });
 
   const hints = createHintPanel({
     puzzle,
@@ -102,7 +136,10 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
       render();
     },
   });
-  hintBtn.addEventListener('click', () => hints.show());
+  hintBtn.addEventListener('click', () => {
+    closeConfirm(null);
+    hints.show();
+  });
 
   const status = h('p', { class: 'status', role: 'status', 'aria-live': 'polite' });
   const lockArea = h(
@@ -116,7 +153,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
     'main',
     { class: 'screen puzzle-screen' },
     header,
-    h('div', { class: 'puzzle-layout' }, clues.el, h('div', { class: 'play' }, lockArea, keypad.el, actions, hints.el), notes.el),
+    h('div', { class: 'puzzle-layout' }, clues.el, h('div', { class: 'play' }, lockArea, keypad.el, actions, confirm, hints.el), notes.el),
   );
   root.replaceChildren(screen);
 
@@ -156,6 +193,8 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
     for (const c of components) c.update(view);
     undo.disabled = !canUndo(state);
     redo.disabled = !canRedo(state);
+    restart.disabled = !canRestart(state);
+    if (restart.disabled && !confirm.hidden) closeConfirm(null);
     validate.disabled = state.solvedAt !== null;
     hintBtn.disabled = state.solvedAt !== null;
     tick();
@@ -163,6 +202,13 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
 
   const onKey = (e: KeyboardEvent): void => {
     if (overlay) return;
+    if (!confirm.hidden) {
+      if (e.key === 'Escape') {
+        closeConfirm(restart);
+        e.preventDefault();
+      }
+      return;
+    }
     const target = e.target as HTMLElement | null;
     const onButton = target?.tagName === 'BUTTON';
     const mod = e.ctrlKey || e.metaKey;
