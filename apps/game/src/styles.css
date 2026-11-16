@@ -983,3 +983,9 @@ h2 {
     grid-column: auto;
   }
 }
+
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  flex: none;
+}

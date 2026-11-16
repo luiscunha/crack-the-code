@@ -1,6 +1,7 @@
 import { BAND_IDS, BANDS, type BandId, type PuzzleParams } from '@ctc/engine';
 import type { Messages } from '../i18n';
-import { h } from './dom';
+import { h, iconButton } from './dom';
+import { icon, type IconName } from './icons';
 
 export interface HomeOptions {
   m: Messages;
@@ -27,18 +28,18 @@ function describe(m: Messages, params: PuzzleParams): string {
   return m.home.params(params.length, kind, params.allowRepeats);
 }
 
-function entry(icon: string, title: string, ...lines: (string | false)[]): HTMLButtonElement {
+function entry(name: IconName, title: string, ...lines: (string | false)[]): HTMLButtonElement {
   return h(
     'button',
     { type: 'button', class: 'entry' },
-    h('span', { class: 'entry-icon', 'aria-hidden': 'true' }, icon),
+    h('span', { class: 'entry-icon', 'aria-hidden': 'true' }, icon(name)),
     h(
       'span',
       { class: 'entry-body' },
       h('span', { class: 'entry-title' }, title),
       ...lines.filter((l): l is string => !!l).map((l) => h('span', { class: 'entry-line' }, l)),
     ),
-    h('span', { class: 'entry-go', 'aria-hidden': 'true' }, '›'),
+    h('span', { class: 'entry-go', 'aria-hidden': 'true' }, icon('next')),
   );
 }
 
@@ -52,22 +53,22 @@ export function mountHome(root: HTMLElement, opts: HomeOptions): void {
       ? h(
           'button',
           { type: 'button', class: 'btn btn-primary btn-resume', 'aria-label': m.home.continueLabel(opts.resume) },
-          h('span', {}, `▶ ${m.home.continue}`),
+          h('span', {}, icon('play'), m.home.continue),
           h('span', { class: 'resume-what' }, opts.resume),
         )
       : null;
   resume?.addEventListener('click', opts.onResume);
 
-  const campaign = entry('🗺️', m.home.campaign, m.home.campaignProgress(opts.campaign.solved, opts.campaign.total));
+  const campaign = entry('map', m.home.campaign, m.home.campaignProgress(opts.campaign.solved, opts.campaign.total));
   campaign.addEventListener('click', opts.onCampaign);
 
   const { daily } = opts;
   const daySolved = daily.solved ? `${m.home.dailySolved}${daily.streak > 0 ? ` · ${m.home.streak(daily.streak)}` : ''}` : false;
-  const dailyBtn = entry('🔐', m.home.daily, m.home.dailyLine(daily.number, m.bands[daily.band].name), daySolved);
+  const dailyBtn = entry('calendar', m.home.daily, m.home.dailyLine(daily.number, m.bands[daily.band].name), daySolved);
   if (daily.solved) dailyBtn.classList.add('entry-done');
   dailyBtn.addEventListener('click', opts.onDaily);
 
-  const stats = h('button', { type: 'button', class: 'btn btn-icon', 'aria-label': m.home.stats }, h('span', { 'aria-hidden': 'true' }, '📊'), h('span', { class: 'btn-label' }, m.home.stats));
+  const stats = iconButton(m.home.stats, 'stats');
   stats.addEventListener('click', opts.onStats);
 
   const status = h('p', { class: 'status home-status', role: 'status', 'aria-live': 'polite' }, opts.notice ?? '');

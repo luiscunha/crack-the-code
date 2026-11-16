@@ -8,7 +8,7 @@ import {
   maxStreak,
   type Progress,
 } from '../progress';
-import { h } from './dom';
+import { h, iconButton } from './dom';
 
 export interface StatsOptions {
   m: Messages;
@@ -24,7 +24,7 @@ export function mountStats(root: HTMLElement, opts: StatsOptions): void {
   const stat = (label: string, value: string | number): HTMLElement =>
     h('div', { class: 'stat' }, h('dt', {}, label), h('dd', {}, String(value)));
 
-  const back = h('button', { type: 'button', class: 'btn btn-icon', 'aria-label': m.puzzle.back }, h('span', { 'aria-hidden': 'true' }, '←'), h('span', { class: 'btn-label' }, m.puzzle.back));
+  const back = iconButton(m.puzzle.back, 'back');
   back.addEventListener('click', opts.onBack);
 
   const clean = Object.values(progress.campaign).filter((r) => r.clean).length;

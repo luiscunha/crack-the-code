@@ -4,7 +4,8 @@ import { canRedo, canUndo, elapsedMs, newGame, reduce, type Action, type GameSta
 import { symbolForKey } from '../symbols';
 import { createClues } from './clues';
 import { createHintPanel } from './hintPanel';
-import { formatTime, h, replayAnimation } from './dom';
+import { formatTime, h, iconButton, replayAnimation } from './dom';
+import { icon } from './icons';
 import { createKeypad, createLock } from './lock';
 import { createNotes } from './notes';
 import { createSuccess, type SuccessOptions } from './success';
@@ -34,15 +35,6 @@ export interface PuzzleScreenOptions {
 
 export interface PuzzleScreen {
   dispose: () => void;
-}
-
-function button(label: string, className: string, icon?: string): HTMLButtonElement {
-  return h(
-    'button',
-    { type: 'button', class: `btn ${className}`, 'aria-label': icon ? label : undefined },
-    icon ? h('span', { 'aria-hidden': 'true' }, icon) : label,
-    icon ? h('span', { class: 'btn-label' }, label) : null,
-  );
 }
 
 export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions): PuzzleScreen {
@@ -75,7 +67,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
   const components: Component[] = [clues, lock, keypad, notes];
 
   // Header
-  const back = button(opts.backLabel, 'btn-icon', '←');
+  const back = iconButton(opts.backLabel, 'back');
   back.addEventListener('click', opts.onBack);
   const timer = h('span', { class: 'timer', role: 'timer', 'aria-label': m.puzzle.timerLabel });
   const title = h(
@@ -87,10 +79,10 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
   const header = h('header', { class: 'topbar' }, back, title, timer, ...(opts.headerExtra ?? []));
 
   // Actions
-  const undo = button(m.puzzle.undo, 'btn-icon', '↶');
-  const redo = button(m.puzzle.redo, 'btn-icon', '↷');
-  const hintBtn = button(m.puzzle.hint, 'btn-hint', '💡');
-  const validate = button(m.puzzle.validate, 'btn-primary');
+  const undo = iconButton(m.puzzle.undo, 'undo');
+  const redo = iconButton(m.puzzle.redo, 'redo');
+  const hintBtn = iconButton(m.puzzle.hint, 'hint', 'btn-hint');
+  const validate = h('button', { type: 'button', class: 'btn btn-primary btn-validate' }, icon('unlock'), m.puzzle.validate);
   undo.addEventListener('click', () => dispatch({ type: 'undo' }));
   redo.addEventListener('click', () => dispatch({ type: 'redo' }));
   validate.addEventListener('click', () => dispatch({ type: 'submit', now: now() }));

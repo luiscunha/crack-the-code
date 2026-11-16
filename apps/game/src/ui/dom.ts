@@ -1,5 +1,6 @@
 import type { PuzzleParams } from '@ctc/engine';
 import { COLORS, glyph } from '../symbols';
+import { icon, type IconName } from './icons';
 
 type Attrs = Record<string, string | number | boolean | undefined>;
 type Child = Node | string | null | undefined | false;
@@ -31,6 +32,16 @@ export function symbolEl(symbol: number, params: PuzzleParams, extraClass = ''):
     el.style.setProperty('--ink', COLORS[symbol]?.ink ?? 'black');
   }
   return el;
+}
+
+/** Icon-only button; the label stays readable by screen readers (and shows on wide layouts if styled). */
+export function iconButton(label: string, name: IconName, className = ''): HTMLButtonElement {
+  return h(
+    'button',
+    { type: 'button', class: `btn btn-icon ${className}`.trim(), 'aria-label': label, title: label },
+    icon(name),
+    h('span', { class: 'btn-label' }, label),
+  );
 }
 
 export function formatTime(ms: number): string {

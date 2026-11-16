@@ -1,6 +1,7 @@
 import { symbolName } from '../i18n';
 import { isSymbolOut } from '../state';
 import { h, symbolEl } from './dom';
+import { icon } from './icons';
 import type { Component, ComponentContext, View } from './view';
 
 const LONG_PRESS_MS = 450;
@@ -83,7 +84,7 @@ export function createKeypad(ctx: ComponentContext): Component {
     return button;
   });
 
-  const erase = h('button', { type: 'button', class: 'key key-erase', 'aria-label': m.puzzle.erase }, '⌫');
+  const erase = h('button', { type: 'button', class: 'key key-erase', 'aria-label': m.puzzle.erase }, icon('erase'));
   erase.addEventListener('click', () => dispatch({ type: 'erase' }));
 
   const el = h(

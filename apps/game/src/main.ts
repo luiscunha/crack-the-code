@@ -35,6 +35,7 @@ import {
 import { shareText } from './share';
 import { newGame, type GameState } from './state';
 import { loadProgress, saveProgress } from './storage';
+import './fonts.css';
 import './styles.css';
 import { h } from './ui/dom';
 import { mountHome } from './ui/home';

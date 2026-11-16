@@ -1,6 +1,7 @@
 import type { Messages } from '../i18n';
 import { elapsedMs, isClean, type GameState } from '../state';
 import { formatTime, h } from './dom';
+import { icon } from './icons';
 
 /** Lets an action report back inside the dialog ("Copied!", or a text to copy by hand). */
 export interface SuccessFeedback {
@@ -51,9 +52,9 @@ export function createSuccess(m: Messages, state: GameState, opts: SuccessOption
   const dialog = h(
     'div',
     { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'success-title' },
-    h('div', { class: 'dialog-icon', 'aria-hidden': 'true' }, '🔓'),
+    h('div', { class: 'dialog-icon', 'aria-hidden': 'true' }, icon('unlock')),
     h('h2', { id: 'success-title' }, m.success.title),
-    isClean(state) && h('p', { class: 'badge-clean' }, `✨ ${m.success.clean}`),
+    isClean(state) && h('p', { class: 'badge-clean' }, icon('star'), m.success.clean),
     h(
       'dl',
       { class: 'stats' },

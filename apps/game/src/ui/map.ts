@@ -7,9 +7,11 @@ import {
   levelStatus,
   solvedInWorld,
   worldLockReason,
+  type LevelStatus,
   type Progress,
 } from '../progress';
-import { formatTime, h } from './dom';
+import { formatTime, h, iconButton } from './dom';
+import { icon, type IconName } from './icons';
 
 export interface MapOptions {
   m: Messages;
@@ -22,7 +24,7 @@ export interface MapOptions {
   onLevel: (level: CampaignLevel) => void;
 }
 
-const MARK = { locked: '🔒', open: '', solved: '✓', clean: '✨' } as const;
+const MARK: Record<LevelStatus, IconName | null> = { locked: 'lock', open: null, solved: 'check', clean: 'star' };
 
 /** Campaign map: one card per world, a 6 × 2 grid of level buttons in each. */
 export function mountMap(root: HTMLElement, opts: MapOptions): void {
@@ -30,7 +32,7 @@ export function mountMap(root: HTMLElement, opts: MapOptions): void {
   let focusEl: HTMLButtonElement | null = null;
   let firstOpen: HTMLButtonElement | null = null;
 
-  const back = h('button', { type: 'button', class: 'btn btn-icon', 'aria-label': m.puzzle.back }, h('span', { 'aria-hidden': 'true' }, '←'), h('span', { class: 'btn-label' }, m.puzzle.back));
+  const back = iconButton(m.puzzle.back, 'back');
   back.addEventListener('click', opts.onBack);
 
   const worlds = campaign.worlds.map((world, w) => {
@@ -40,6 +42,7 @@ export function mountMap(root: HTMLElement, opts: MapOptions): void {
     const levels = world.levels.map((level) => {
       const status = levelStatus(campaign, progress, level);
       const n = level.index + 1;
+      const mark = MARK[status];
       const reason = status === 'locked' ? levelLockReason(campaign, progress, level) : null;
       const best = progress.campaign[level.id]?.bestTimeMs ?? null;
       const label =
@@ -52,7 +55,7 @@ export function mountMap(root: HTMLElement, opts: MapOptions): void {
         'button',
         { type: 'button', class: 'level', 'data-status': status, 'aria-label': label, title: label, disabled: status === 'locked' },
         h('span', { class: 'level-num', 'aria-hidden': 'true' }, String(n)),
-        h('span', { class: 'level-mark', 'aria-hidden': 'true' }, MARK[status]),
+        mark ? h('span', { class: 'level-mark', 'aria-hidden': 'true' }, icon(mark)) : null,
       );
       button.addEventListener('click', () => opts.onLevel(level));
       if (level.id === opts.focus) focusEl = button;
@@ -71,7 +74,7 @@ export function mountMap(root: HTMLElement, opts: MapOptions): void {
       ),
       h('p', { class: 'world-bands' }, bands),
       worldLock?.kind === 'world' &&
-        h('p', { class: 'world-lock' }, `🔒 ${m.map.lockedWorld(m.worlds[worldLock.previous.id], worldLock.missing)}`),
+        h('p', { class: 'world-lock' }, icon('lock'), m.map.lockedWorld(m.worlds[worldLock.previous.id], worldLock.missing)),
       h('div', { class: 'level-grid', role: 'group', 'aria-labelledby': titleId }, ...levels),
     );
   });
