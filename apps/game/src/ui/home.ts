@@ -1,130 +1,108 @@
-import { BAND_IDS, BANDS, type BandId, type PuzzleParams } from '@ctc/engine';
+import type { BandId, WorldId } from '@ctc/engine';
 import type { Messages } from '../i18n';
 import { h, iconButton } from './dom';
 import { icon, type IconName } from './icons';
 
+export interface HomeWorld {
+  id: WorldId;
+  solved: number;
+  total: number;
+  locked: boolean;
+}
+
 export interface HomeOptions {
   m: Messages;
-  selected: BandId;
-  /** Message shown under the free-play button (e.g. a generation failure). */
+  /** Message shown under the entries (e.g. a generation failure). */
   notice?: string;
   headerExtra?: HTMLElement[];
   /** What "Continue" resumes (e.g. "Cofre · nível 3"); absent = nothing in progress. */
   resume?: string;
-  campaign: { solved: number; total: number };
+  campaign: { solved: number; total: number; worlds: readonly HomeWorld[] };
   daily: { number: number; band: BandId; solved: boolean; streak: number };
+  /** Decorative lock shown under the brand. */
+  hero?: HTMLElement;
   onResume: () => void;
   onCampaign: () => void;
   onDaily: () => void;
+  onFreePlay: () => void;
   onStats: () => void;
-  onSelect: (band: BandId) => void;
-  /** Starts generation; the screen shows "generating…" until it navigates away. */
-  onNewPuzzle: (band: BandId) => void;
 }
 
-function describe(m: Messages, params: PuzzleParams): string {
-  const kind =
-    params.alphabet === 'colors' ? m.home.alphabetColors(params.alphabetSize) : m.home.alphabetDigits;
-  return m.home.params(params.length, kind, params.allowRepeats);
-}
-
-function entry(name: IconName, title: string, ...lines: (string | false)[]): HTMLButtonElement {
+function entry(kind: string, name: IconName, title: string, ...body: (Node | false | null)[]): HTMLButtonElement {
   return h(
     'button',
-    { type: 'button', class: 'entry' },
+    { type: 'button', class: `entry entry-${kind}` },
     h('span', { class: 'entry-icon', 'aria-hidden': 'true' }, icon(name)),
-    h(
-      'span',
-      { class: 'entry-body' },
-      h('span', { class: 'entry-title' }, title),
-      ...lines.filter((l): l is string => !!l).map((l) => h('span', { class: 'entry-line' }, l)),
-    ),
-    h('span', { class: 'entry-go', 'aria-hidden': 'true' }, icon('next')),
+    h('span', { class: 'entry-title' }, title),
+    ...body,
   );
 }
 
-/** Start screen: resume, campaign, Daily Vault, free play (band selector), statistics. */
+/** Start screen: brand and hero lock, then Continue, Campaign, Daily Vault and Free play. */
 export function mountHome(root: HTMLElement, opts: HomeOptions): void {
-  const { m } = opts;
-  let selected = opts.selected;
+  const { m, daily } = opts;
 
   const resume =
     opts.resume !== undefined
       ? h(
           'button',
-          { type: 'button', class: 'btn btn-primary btn-resume', 'aria-label': m.home.continueLabel(opts.resume) },
-          h('span', {}, icon('play'), m.home.continue),
-          h('span', { class: 'resume-what' }, opts.resume),
+          { type: 'button', class: 'entry entry-resume', 'aria-label': m.home.continueLabel(opts.resume) },
+          h('span', { class: 'entry-icon', 'aria-hidden': 'true' }, icon('play')),
+          h('span', { class: 'entry-title' }, m.home.continue),
+          h('span', { class: 'entry-line' }, opts.resume),
         )
       : null;
   resume?.addEventListener('click', opts.onResume);
 
-  const campaign = entry('map', m.home.campaign, m.home.campaignProgress(opts.campaign.solved, opts.campaign.total));
+  const { solved, total, worlds } = opts.campaign;
+  const meter = h('span', { class: 'meter', 'aria-hidden': 'true' }, h('span', { class: 'meter-fill' }));
+  meter.style.setProperty('--p', String(total > 0 ? solved / total : 0));
+  const chips = h(
+    'span',
+    { class: 'world-chips', 'aria-hidden': 'true' },
+    ...worlds.map((w) =>
+      h('span', { class: `world-chip${w.locked ? ' locked' : ''}`, 'data-theme': w.id, title: m.worlds[w.id] }, w.locked ? icon('lock') : null),
+    ),
+  );
+  const campaign = entry('campaign', 'map', m.home.campaign, h('span', { class: 'entry-line' }, m.home.campaignProgress(solved, total)), meter, chips);
   campaign.addEventListener('click', opts.onCampaign);
 
-  const { daily } = opts;
-  const daySolved = daily.solved ? `${m.home.dailySolved}${daily.streak > 0 ? ` · ${m.home.streak(daily.streak)}` : ''}` : false;
-  const dailyBtn = entry('calendar', m.home.daily, m.home.dailyLine(daily.number, m.bands[daily.band].name), daySolved);
+  const dailyBtn = entry(
+    'daily',
+    'calendar',
+    m.home.daily,
+    h('span', { class: 'entry-number' }, `#${daily.number}`),
+    h('span', { class: 'entry-line' }, m.bands[daily.band].name),
+    daily.solved && h('span', { class: 'entry-stamp' }, icon('check'), m.home.dailySolved),
+    daily.streak > 0 && h('span', { class: 'entry-streak' }, icon('flame'), m.home.streak(daily.streak)),
+  );
+  dailyBtn.dataset['theme'] = 'daily';
   if (daily.solved) dailyBtn.classList.add('entry-done');
   dailyBtn.addEventListener('click', opts.onDaily);
+
+  const free = entry('free', 'dice', m.home.freePlay, h('span', { class: 'entry-line' }, m.home.freePlayLine));
+  free.addEventListener('click', opts.onFreePlay);
 
   const stats = iconButton(m.home.stats, 'stats');
   stats.addEventListener('click', opts.onStats);
 
-  const status = h('p', { class: 'status home-status', role: 'status', 'aria-live': 'polite' }, opts.notice ?? '');
-  const start = h('button', { type: 'button', class: 'btn btn-primary btn-start' }, m.home.newPuzzle);
-
-  const cards = BAND_IDS.map((band) => {
-    const variants = [...new Set(BANDS[band].variants.map((v) => describe(m, v.params)))];
-    const card = h(
-      'button',
-      { type: 'button', class: 'band', 'aria-pressed': 'false', 'data-band': band },
-      h('span', { class: 'band-name' }, m.bands[band].name),
-      h('span', { class: 'band-desc' }, m.bands[band].description),
-      h('span', { class: 'band-params' }, variants.join(' / ')),
-    );
-    card.addEventListener('click', () => select(band));
-    card.addEventListener('dblclick', () => go());
-    return card;
-  });
-
-  function select(band: BandId): void {
-    selected = band;
-    cards.forEach((card, i) => card.setAttribute('aria-pressed', String(BAND_IDS[i] === band)));
-    opts.onSelect(band);
-  }
-
-  function go(): void {
-    start.disabled = true;
-    status.classList.remove('error');
-    status.textContent = m.home.generating;
-    opts.onNewPuzzle(selected);
-  }
-  start.addEventListener('click', go);
-
+  const status = h('p', { class: 'gen-status', role: 'status', 'aria-live': 'polite' }, opts.notice ?? '');
   if (opts.notice) status.classList.add('error');
 
   const screen = h(
     'main',
     { class: 'screen home' },
-    h(
-      'header',
-      { class: 'topbar' },
-      h('div', { class: 'title' }, h('h1', {}, m.appTitle), h('span', { class: 'subtitle' }, m.tagline)),
-      stats,
-      ...(opts.headerExtra ?? []),
-    ),
-    h('nav', { class: 'entries', 'aria-label': m.appTitle }, resume, campaign, dailyBtn),
+    h('header', { class: 'topbar home-bar' }, h('span', { class: 'spacer' }), stats, ...(opts.headerExtra ?? [])),
     h(
       'section',
-      { class: 'bands', 'aria-labelledby': 'bands-title' },
-      h('h2', { id: 'bands-title', class: 'section-title' }, m.home.freePlay),
-      h('p', { class: 'help' }, m.home.chooseBand),
-      h('div', { class: 'band-list', role: 'group', 'aria-labelledby': 'bands-title' }, ...cards),
-      h('div', { class: 'home-actions' }, start, status),
+      { class: 'hero' },
+      opts.hero ?? null,
+      h('h1', { class: 'brand' }, m.appTitle),
+      h('p', { class: 'tagline' }, m.tagline),
     ),
+    h('nav', { class: 'entries', 'aria-label': m.appTitle }, resume, campaign, dailyBtn, free),
+    status,
   );
   root.replaceChildren(screen);
-  select(selected);
   (resume ?? campaign).focus();
 }

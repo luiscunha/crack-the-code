@@ -35,9 +35,10 @@ export const pt: Messages = {
     dailySolved: 'resolvido',
     streak: (days) => `${days} ${plural(days, 'dia seguido', 'dias seguidos')}`,
     freePlay: 'Jogo livre',
+    freePlayLine: 'Um código novo, à tua medida',
     stats: 'Estatísticas',
     chooseBand: 'Escolhe a dificuldade',
-    newPuzzle: 'Novo puzzle',
+    startBand: (band, description, size) => `Jogar ${band}: ${description} ${size}`,
     generating: 'A gerar…',
     failed: 'Não foi possível gerar o puzzle. Tenta outra vez.',
     params: (length, kind, repeats) =>
@@ -80,6 +81,7 @@ export const pt: Messages = {
   puzzle: {
     back: 'Voltar ao início',
     backToMap: 'Voltar ao mapa',
+    backToFree: 'Voltar às dificuldades',
     seed: (seed) => `seed ${seed}`,
     timerLabel: 'Tempo',
     cluesTitle: 'Pistas',

@@ -59,9 +59,11 @@ export interface Messages {
     dailySolved: string;
     streak: (days: number) => string;
     freePlay: string;
+    freePlayLine: string;
     stats: string;
     chooseBand: string;
-    newPuzzle: string;
+    /** Accessible name of a difficulty button on the free-play screen. */
+    startBand: (band: string, description: string, size: string) => string;
     generating: string;
     failed: string;
     params: (length: number, kind: string, repeats: boolean) => string;
@@ -100,6 +102,7 @@ export interface Messages {
   puzzle: {
     back: string;
     backToMap: string;
+    backToFree: string;
     seed: (seed: number) => string;
     timerLabel: string;
     cluesTitle: string;

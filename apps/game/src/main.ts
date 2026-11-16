@@ -17,6 +17,8 @@ import { readPref, writePref } from './prefs';
 import {
   campaignSolved,
   campaignTotal,
+  solvedInWorld,
+  worldLockReason,
   currentStreak,
   findLevel,
   gameResult,
@@ -38,6 +40,8 @@ import { loadProgress, saveProgress } from './storage';
 import './fonts.css';
 import './styles.css';
 import { h } from './ui/dom';
+import { mountFreePlay } from './ui/freePlay';
+import { icon } from './ui/icons';
 import { mountHome } from './ui/home';
 import { mountMap } from './ui/map';
 import { mountPuzzleScreen, type PuzzleScreen } from './ui/puzzleScreen';
@@ -59,6 +63,7 @@ type PlayContext =
 
 type Screen =
   | { kind: 'home'; notice?: string }
+  | { kind: 'free'; notice?: string }
   | { kind: 'map'; focus?: string }
   | { kind: 'stats' }
   | { kind: 'puzzle'; ctx: PlayContext; puzzle: Puzzle; state: GameState };
@@ -194,22 +199,22 @@ function openPuzzle(ctx: PlayContext, puzzle: Puzzle): void {
 
 /**
  * Generation runs off the current frame so "generating…" paints first (master can
- * take ~150 ms). `make` returns null when it cannot produce a puzzle.
+ * take ~150 ms). `make` returns null when it cannot produce a puzzle; the player then
+ * lands on `fallback` (home or the free-play list) with the failure notice.
  */
-function launch(make: () => { ctx: PlayContext; puzzle: Puzzle } | null): void {
-  if (screen.kind !== 'home' && screen.kind !== 'puzzle') {
-    screen = { kind: 'home' };
+function launch(make: () => { ctx: PlayContext; puzzle: Puzzle } | null, fallback: 'home' | 'free'): void {
+  if (screen.kind !== fallback && screen.kind !== 'puzzle') {
+    screen = { kind: fallback };
     render();
   }
-  const status = root.querySelector('.home-status');
+  const status = root.querySelector('.gen-status');
   if (status) status.textContent = msgs().home.generating;
-  root.querySelector<HTMLButtonElement>('.btn-start')?.setAttribute('disabled', '');
   window.setTimeout(() => {
     const made = make();
     if (made) {
       openPuzzle(made.ctx, made.puzzle);
     } else {
-      screen = { kind: 'home', notice: msgs().home.failed };
+      screen = { kind: fallback, notice: msgs().home.failed };
       render();
     }
   }, 30);
@@ -225,7 +230,7 @@ function launchFree(b: BandId, seed: number, retry: boolean): void {
       result = generatePuzzle(b, s);
     }
     return result ? { ctx: { source: 'free', band: b, seed: s }, puzzle: result.puzzle } : null;
-  });
+  }, 'free');
 }
 
 const dailyCache = new Map<string, Puzzle>();
@@ -239,7 +244,7 @@ function launchDaily(date: string): void {
     const puzzle = dailyPuzzle(date);
     dailyCache.set(date, puzzle);
     return { ctx: { source: 'daily', date }, puzzle };
-  });
+  }, 'home');
 }
 
 function openLevel(level: CampaignLevel): void {
@@ -364,7 +369,12 @@ function syncUrl(): void {
 
 function langButton(): HTMLElement {
   const m = msgs();
-  const button = h('button', { type: 'button', class: 'btn btn-lang', 'aria-label': m.langToggleLabel, lang: locale === 'en' ? 'pt-PT' : 'en' }, m.langToggle);
+  const button = h(
+    'button',
+    { type: 'button', class: 'btn btn-lang', 'aria-label': m.langToggleLabel, title: m.langToggleLabel, lang: locale === 'en' ? 'pt-PT' : 'en' },
+    icon('globe'),
+    h('span', { 'aria-hidden': 'true' }, m.langToggle),
+  );
   button.addEventListener('click', () => {
     locale = locale === 'en' ? 'pt-PT' : 'en';
     writePref('lang', locale);
@@ -383,11 +393,19 @@ function renderHome(notice?: string): void {
   const savedCtx = saved ? contextOfSaved(saved) : null;
   mountHome(root, {
     m: msgs(),
-    selected: band,
     notice,
     headerExtra: [langButton()],
     resume: savedCtx ? describeSaved(savedCtx) : undefined,
-    campaign: { solved: campaignSolved(CAMPAIGN, progress), total: campaignTotal(CAMPAIGN) },
+    campaign: {
+      solved: campaignSolved(CAMPAIGN, progress),
+      total: campaignTotal(CAMPAIGN),
+      worlds: CAMPAIGN.worlds.map((world, w) => ({
+        id: world.id,
+        solved: solvedInWorld(progress, world),
+        total: world.levels.length,
+        locked: worldLockReason(CAMPAIGN, progress, w) !== null,
+      })),
+    },
     daily: {
       number: dailyNumber(date),
       band: dailyBand(date),
@@ -397,12 +415,8 @@ function renderHome(notice?: string): void {
     onResume: () => (savedCtx ? openContext(savedCtx) : undefined),
     onCampaign: () => go({ kind: 'map' }),
     onDaily: () => launchDaily(today()),
+    onFreePlay: () => go({ kind: 'free' }),
     onStats: () => go({ kind: 'stats' }),
-    onSelect: (b) => {
-      band = b;
-      writePref('band', b);
-    },
-    onNewPuzzle: (b) => launchFree(b, randomSeed(), true),
   });
 }
 
@@ -417,6 +431,20 @@ function render(): void {
   switch (screen.kind) {
     case 'home':
       return renderHome(screen.notice);
+    case 'free':
+      return mountFreePlay(root, {
+        m,
+        last: band,
+        solved: Object.fromEntries(BAND_IDS.map((b) => [b, progress.free[b].solved])) as Record<BandId, number>,
+        notice: screen.notice,
+        headerExtra: [langButton()],
+        onBack: () => go({ kind: 'home' }),
+        onStart: (b) => {
+          band = b;
+          writePref('band', b);
+          launchFree(b, randomSeed(), true);
+        },
+      });
     case 'map':
       return mountMap(root, {
         m,
@@ -443,11 +471,12 @@ function render(): void {
   const current = screen;
   const { ctx, puzzle } = current;
   if (import.meta.env.DEV) window.__ctc = { puzzle };
-  const back: Screen = ctx.source === 'campaign' ? { kind: 'map', focus: ctx.level.id } : { kind: 'home' };
+  const back: Screen =
+    ctx.source === 'campaign' ? { kind: 'map', focus: ctx.level.id } : ctx.source === 'free' ? { kind: 'free' } : { kind: 'home' };
   mounted = mountPuzzleScreen(root, {
     puzzle,
     ...headerOf(ctx, puzzle),
-    backLabel: back.kind === 'map' ? m.puzzle.backToMap : m.puzzle.back,
+    backLabel: back.kind === 'map' ? m.puzzle.backToMap : back.kind === 'free' ? m.puzzle.backToFree : m.puzzle.back,
     m,
     now: () => Date.now(),
     initialState: current.state,
