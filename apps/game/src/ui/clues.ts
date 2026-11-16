@@ -17,11 +17,12 @@ interface ClueRender {
   description: string;
 }
 
+/** Feedback pegs drawn in CSS: filled ● = right place, hollow ○ = wrong place, a groove = nothing. */
 function pegs(exact: number, misplaced: number): HTMLElement {
   const el = h('span', { class: 'pegs', 'aria-hidden': 'true' });
-  for (let i = 0; i < exact; i++) el.append(h('span', { class: 'peg peg-exact' }, '●'));
-  for (let i = 0; i < misplaced; i++) el.append(h('span', { class: 'peg peg-misplaced' }, '○'));
-  if (exact + misplaced === 0) el.append(h('span', { class: 'peg peg-none' }, '–'));
+  for (let i = 0; i < exact; i++) el.append(h('span', { class: 'peg peg-exact' }));
+  for (let i = 0; i < misplaced; i++) el.append(h('span', { class: 'peg peg-misplaced' }));
+  if (exact + misplaced === 0) el.append(h('span', { class: 'peg peg-none' }));
   return el;
 }
 
@@ -70,8 +71,8 @@ export function createClues(ctx: ComponentContext): Component {
 
   const el = h(
     'section',
-    { class: 'panel clues', 'aria-labelledby': 'clues-title' },
-    h('h2', { id: 'clues-title', class: 'panel-title' }, m.puzzle.cluesTitle),
+    { class: 'clues', 'aria-labelledby': 'clues-title' },
+    h('h2', { id: 'clues-title', class: 'section-title' }, m.puzzle.cluesTitle),
     list,
     h('p', { class: 'help' }, m.puzzle.exhaustedHelp),
   );

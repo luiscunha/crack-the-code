@@ -3,6 +3,7 @@ import { explainHint, hintKey, nextHint, solverSteps, type Hint } from '../hints
 import type { Messages } from '../i18n';
 import type { Action, GameState } from '../state';
 import { h } from './dom';
+import { icon } from './icons';
 
 export interface HintPanelOptions {
   puzzle: Puzzle;
@@ -33,7 +34,7 @@ export function createHintPanel(opts: HintPanelOptions): HintPanel {
   const el = h(
     'section',
     { class: 'hint-panel', 'aria-labelledby': 'hint-title', 'aria-live': 'polite', hidden: true },
-    h('h2', { id: 'hint-title', class: 'panel-title' }, m.hintPanel.title),
+    h('h2', { id: 'hint-title', class: 'panel-title' }, icon('hint'), m.hintPanel.title),
     text,
     h('div', { class: 'hint-actions' }, apply, closeBtn),
   );

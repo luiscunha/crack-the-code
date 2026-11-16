@@ -16,6 +16,8 @@ export interface PuzzleScreenOptions {
   /** Header: what is being played ("Cofre · nível 3", "Cofre Diário #5", band name). */
   title: string;
   subtitle: string;
+  /** Text on the lock's label (level number, "#5", band). */
+  lockLabel?: string;
   /** Accessible label of the back button. */
   backLabel: string;
   m: Messages;
@@ -32,6 +34,9 @@ export interface PuzzleScreenOptions {
   /** Extra header controls (language toggle). */
   headerExtra?: HTMLElement[];
 }
+
+/** Length of the unlock animation before the result dialog opens (styles.css). */
+const UNLOCK_MS = 1100;
 
 export interface PuzzleScreen {
   dispose: () => void;
@@ -62,7 +67,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
 
   const ctx = { puzzle, m, dispatch };
   const clues = createClues(ctx);
-  const lock = createLock(ctx);
+  const lock = createLock(ctx, { label: opts.lockLabel });
   const keypad = createKeypad(ctx);
   const notes = createNotes(ctx);
   const components: Component[] = [clues, lock, keypad, notes];
@@ -158,6 +163,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
   root.replaceChildren(screen);
 
   let overlay: HTMLElement | null = null;
+  let unlockTimer: number | undefined;
   function onSubmitted(): void {
     switch (state.lastSubmit) {
       case 'wrong':
@@ -168,11 +174,15 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
         status.textContent = m.puzzle.incomplete;
         replayAnimation(lock.el, 'shake');
         break;
-      case 'right':
+      case 'right': {
         status.textContent = '';
         opts.onSolved?.(state);
-        showSuccess();
+        // Let the unlock sequence (wheels light up, shackle springs) play before the dialog.
+        const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        overlay = h('div', { class: 'overlay-pending' });
+        unlockTimer = window.setTimeout(showSuccess, reduced ? 0 : UNLOCK_MS);
         break;
+      }
       case null:
         break;
     }
@@ -245,6 +255,7 @@ export function mountPuzzleScreen(root: HTMLElement, opts: PuzzleScreenOptions):
     dispose: () => {
       document.removeEventListener('keydown', onKey);
       window.clearInterval(interval);
+      window.clearTimeout(unlockTimer);
     },
   };
 }

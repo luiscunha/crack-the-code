@@ -63,9 +63,20 @@ export function mountMap(root: HTMLElement, opts: MapOptions): void {
       return button;
     });
     const titleId = `world-${world.id}`;
+    // Each world is a panel in its own theme (a preview of the place); a locked world
+    // sits behind a roller shutter that carries the reason.
+    const grid = h('div', { class: 'level-grid', role: 'group', 'aria-labelledby': titleId }, ...levels);
+    const shutter =
+      worldLock?.kind === 'world'
+        ? h(
+            'div',
+            { class: 'shutter' },
+            h('p', { class: 'world-lock' }, icon('lock'), m.map.lockedWorld(m.worlds[worldLock.previous.id], worldLock.missing)),
+          )
+        : null;
     return h(
       'section',
-      { class: `world${worldLock ? ' world-locked' : ''}`, 'aria-labelledby': titleId },
+      { class: `world${worldLock ? ' world-locked' : ''}`, 'data-theme': world.id, 'aria-labelledby': titleId },
       h(
         'div',
         { class: 'world-head' },
@@ -73,9 +84,7 @@ export function mountMap(root: HTMLElement, opts: MapOptions): void {
         h('span', { class: 'world-progress' }, m.map.progress(solvedInWorld(progress, world), world.levels.length)),
       ),
       h('p', { class: 'world-bands' }, bands),
-      worldLock?.kind === 'world' &&
-        h('p', { class: 'world-lock' }, icon('lock'), m.map.lockedWorld(m.worlds[worldLock.previous.id], worldLock.missing)),
-      h('div', { class: 'level-grid', role: 'group', 'aria-labelledby': titleId }, ...levels),
+      h('div', { class: 'world-levels' }, grid, shutter),
     );
   });
 

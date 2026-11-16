@@ -43,6 +43,8 @@ import { h } from './ui/dom';
 import { mountFreePlay } from './ui/freePlay';
 import { icon } from './ui/icons';
 import { mountHome } from './ui/home';
+import { createShowpieceLock } from './ui/lock';
+import { applyTheme, type ThemeId } from './ui/theme';
 import { mountMap } from './ui/map';
 import { mountPuzzleScreen, type PuzzleScreen } from './ui/puzzleScreen';
 import { mountStats } from './ui/stats';
@@ -134,18 +136,38 @@ function contextOfSaved(saved: SavedGame): PlayContext | null {
   }
 }
 
-function headerOf(ctx: PlayContext, puzzle: Puzzle): { title: string; subtitle: string } {
+function headerOf(ctx: PlayContext, puzzle: Puzzle): { title: string; subtitle: string; lockLabel: string } {
   const m = msgs();
   const bandName = m.bands[puzzle.band].name;
   switch (ctx.source) {
     case 'campaign':
-      return { title: m.context.level(m.worlds[ctx.level.world], ctx.level.index + 1), subtitle: bandName };
+      return {
+        title: m.context.level(m.worlds[ctx.level.world], ctx.level.index + 1),
+        subtitle: bandName,
+        lockLabel: String(ctx.level.index + 1).padStart(2, '0'),
+      };
     case 'daily':
-      return { title: m.context.daily(dailyNumber(ctx.date)), subtitle: m.context.dailySub(bandName, ctx.date) };
+      return { title: m.context.daily(dailyNumber(ctx.date)), subtitle: m.context.dailySub(bandName, ctx.date), lockLabel: `#${dailyNumber(ctx.date)}` };
     case 'free':
-      return { title: bandName, subtitle: m.puzzle.seed(ctx.seed) };
+      return { title: bandName, subtitle: m.puzzle.seed(ctx.seed), lockLabel: bandName };
   }
 }
+
+/** The place a screen is drawn in: each world its room, the Daily Vault its own, the rest the workshop. */
+function themeOf(s: Screen): ThemeId {
+  if (s.kind !== 'puzzle') return 'workshop';
+  switch (s.ctx.source) {
+    case 'campaign':
+      return s.ctx.level.world;
+    case 'daily':
+      return 'daily';
+    case 'free':
+      return 'workshop';
+  }
+}
+
+/** The home hero: 4-5-9, the spec's first worked example. */
+const HERO_PARAMS = { length: 3, alphabetSize: 10, allowRepeats: false, alphabet: 'digits' } as const;
 
 /** Short description of a saved game for the "Continue" button. */
 function describeSaved(ctx: PlayContext): string {
@@ -415,12 +437,19 @@ function renderHome(notice?: string): void {
     onResume: () => (savedCtx ? openContext(savedCtx) : undefined),
     onCampaign: () => go({ kind: 'map' }),
     onDaily: () => launchDaily(today()),
+    hero: createShowpieceLock(HERO_PARAMS, [4, 5, 9]),
     onFreePlay: () => go({ kind: 'free' }),
     onStats: () => go({ kind: 'stats' }),
   });
 }
 
 function render(): void {
+  paint();
+  const el = root.firstElementChild;
+  if (el instanceof HTMLElement) applyTheme(el, themeOf(screen));
+}
+
+function paint(): void {
   mounted?.dispose();
   mounted = null;
   const m = msgs();

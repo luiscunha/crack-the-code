@@ -47,7 +47,7 @@ export function createNotes(ctx: ComponentContext): Component {
 
   const el = h(
     'section',
-    { class: 'panel notes', 'aria-labelledby': 'notes-title' },
+    { class: 'notes notepad', 'aria-labelledby': 'notes-title' },
     h('h2', { id: 'notes-title', class: 'panel-title' }, m.puzzle.notesTitle),
     h('div', { class: 'notes-scroll' }, table),
     h('p', { class: 'help' }, m.puzzle.notesHelp),
