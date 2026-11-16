@@ -221,7 +221,7 @@ html[data-theme='safe'] body::after {
   color-scheme: light;
   --room-color: #cfd2d6;
   --room:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005 .014' numOctaves='5' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .38 0 0 0 0 .42 1 0 0 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0 0 0 .5 0 0 0 0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E") 0 0 / 480px 480px,
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='480'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.005 .014' numOctaves='5' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 .36 0 0 0 0 .38 0 0 0 0 .42 1 0 0 0 0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='table' tableValues='0 0 0 0 .5 0 0 0 0'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)'/%3E%3C/svg%3E") 50% 50% / cover no-repeat,
     linear-gradient(180deg, #e6e7e9, #c5c8cd);
   --ink: #15181c;
   --ink-muted: #3d434b;
@@ -710,4 +710,10 @@ html[data-theme='safe'] body::after {
 
 .entry-daily .entry-line {
   color: var(--ink-muted);
+}
+
+/* Cinzel is much wider than the stencil face: smaller title so "MUSEU · NÍVEL 12" fits a phone. */
+[data-theme='museum'] .topbar h1 {
+  font-size: clamp(1rem, 4.3vw, 1.45rem);
+  letter-spacing: 0.03em;
 }
